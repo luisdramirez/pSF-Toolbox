@@ -1,0 +1,146 @@
+%%% simulate_pSFT
+
+%{
+
+Written by Luis D. Ramirez
+luisdr@bu.edu
+Boston University
+
+%}
+
+close all; clear variables; clc;
+
+%% Toggles
+
+% Plot settings
+font_type = 'Helvetica';
+axes_label_font_size = 14;
+axes_tick_font_size = 13;
+tick_length = 0.020;
+line_width = 1;
+
+% Colors (RGB)
+red = [204 0 0]/255;
+green = [0 153 0]/255;
+blue = [0 76 152]/255;
+purple = [102 51 204]/255;
+black = [0 0 0];
+white = [1 1 1];
+gray = white/2;
+cond_colors = [blue; red; black]; % attend low sf, attend high sf, attend fixation
+
+%% Define pSFT model
+
+% Function handle example:
+% fx = @(x) x.^2
+% fx(3) = 9
+% R = exp(-((log(x) - log(mu)).^2) ./ ...
+%    (2 * sigma.^2));
+
+% Log gaussian function handle 
+log_gauss = @(params,sf) logGauss(params, sf);
+
+% Select function for pSFT model
+pSFT_model = log_gauss;
+
+%% Spatial frequency parameters
+
+sf_min = 0.1;
+sf_max = 12;
+sf_count = 1000;
+log_sf = logspace(log10(sf_min), log10(sf_max), sf_count); % Fine sample of presented SFs
+log_sf_exp = logspace(log10(sf_min), log10(sf_max), 40); % Experiment presented SFs
+
+%% Individual pSFT
+
+% pSFT parameters
+mu = 1;
+sigma = 0.5;
+
+% Generate neural response with log gaussian function handle 
+params = [mu, sigma];
+R = pSFT_model(params, log_sf);
+
+% Plot pSFT
+figure('Name','Baseline pSFT','Color',[1 1 1])
+
+plot(log_sf, R, 'Color', green);
+
+% Format figure
+xlabel('Spatial frequency (cpd)','FontName',font_type,'FontSize',axes_label_font_size); ylabel('Response (au)','FontName',font_type,'FontSize',axes_label_font_size);
+set(gca, 'TickDir','out', 'XScale','log','TickLength',[tick_length tick_length],'FontName',font_type,'FontSize',axes_tick_font_size);
+xticks([sf_min 1 5 sf_max]); xticklabels([sf_min 1 5 sf_max]); xlim([sf_min sf_max])
+yticks([0 0.5 1])
+box off;
+
+%% Change in peak
+
+mu_inc = 2;
+params_inc_mu = [mu * mu_inc, sigma];
+R_mu(1,:) = pSFT_model(params_inc_mu, log_sf);
+
+mu_dec = 2;
+params_dec_mu = [mu / mu_dec, sigma];
+R_mu(2,:) = pSFT_model(params_dec_mu, log_sf);
+
+% Plot responses 
+figure('Color',[1 1 1],'Name', 'Change in peak')
+
+plot(log_sf,R,'Color',green); hold on;
+
+plot(log_sf,R_mu(1,:),'Color',red) % increase
+plot(log_sf,R_mu(2,:),'Color',blue) % decrease
+
+line([params(1) params(1)], [min(ylim) max(ylim)],'LineStyle','--', 'Color', green);
+line([params_inc_mu(1) params_inc_mu(1)], [min(ylim) max(ylim)],'LineStyle','--', 'Color', red);
+line([params_dec_mu(1) params_dec_mu(1)], [min(ylim) max(ylim)],'LineStyle','--', 'Color', blue);
+
+% Format figure
+xlabel('Spatial frequency (cpd)'); ylabel('Response (au)');
+set(gca, 'TickDir','out', 'XScale','log','TickLength',[tick_length tick_length]);
+if mu ~= 1
+    xticks([sf_min 1 mu sf_max]); xticklabels([sf_min 1 mu sf_max]);
+else
+    xticks([sf_min mu sf_max]); xticklabels([sf_min mu sf_max]);
+end
+xlim([sf_min sf_max])
+xlim([sf_min sf_max])
+ylim([0 1])
+box off;
+legend({'Baseline pSFT', [num2str(mu_inc) ' \times \mu'], ['\mu / ' num2str(mu_dec)]})
+
+%% Change in bandwidth
+
+sigma_inc = 2;
+params_inc_sigma = [mu, sigma * sigma_inc];
+R_sigma(1,:) = pSFT_model(params_inc_sigma, log_sf);
+
+sigma_dec = 2;
+params_dec_sigma = [mu, sigma / sigma_dec];
+R_sigma(2,:) = pSFT_model(params_dec_sigma, log_sf);
+
+% Plot responses 
+figure('Color',[1 1 1],'Name', 'Change in bandwidth')
+
+plot(log_sf,R,'Color',green); hold on;
+
+plot(log_sf, R_sigma(1,:),'Color',red) % increase
+plot(log_sf, R_sigma(2,:),'Color',blue) % decrease
+
+line([params(1) params(1)], [min(ylim) max(ylim)],'LineStyle','--', 'Color', green);
+line([params_inc_sigma(1) params_inc_sigma(1)], [min(ylim) max(ylim)],'LineStyle','--', 'Color', red);
+line([params_dec_sigma(1) params_dec_sigma(1)], [min(ylim) max(ylim)],'LineStyle','--', 'Color', blue);
+
+% Format figure
+xlabel('Spatial frequency (cpd)'); ylabel('Response (au)');
+set(gca, 'TickDir','out', 'XScale','log','TickLength',[tick_length tick_length]);
+if mu ~= 1
+    xticks([sf_min 1 mu sf_max]); xticklabels([sf_min 1 mu sf_max]);
+else
+    xticks([sf_min mu sf_max]); xticklabels([sf_min mu sf_max]);
+end
+xlim([sf_min sf_max])
+xlim([sf_min sf_max])
+ylim([0 1])
+box off;
+legend({'Baseline pSFT', [num2str(sigma_inc) ' \times \sigma'], ['\sigma / ' num2str(sigma_dec)]})
