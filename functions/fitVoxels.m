@@ -1,5 +1,24 @@
 % fitVoxels
 %   Fits pSFT parameters to each voxel
+%
+%   Input Arguments
+%       measured_BOLD – matrix of measured BOLD time series [voxels x time]
+%       I – matrix of input spatial frequency time series [1 x time]
+%       HIRF – hemodynamic impulse response function [1 x time]
+%       p – structure of parameters (see Fit_pSFT.m)
+%       toggles – structure of toggles (see Fit_pSFT.m)
+%
+%   Output Arguments
+%       chunk – structure with fields:
+%           -   start_values – initial pSFT parameters [voxels x 4]
+%           -   start_sse – initial SSE values [voxels x 1]
+%           -   param_est – estimated pSFT parameters [voxels x 4]
+%           -   exitflag – fmincon exit flags [voxels x 1]
+%           -   sse – SSE values [voxels x 1]
+%           -   r2 – R^2 values [voxels x 1]
+%           -   est_SFT – estimated SFT curves [voxels x sf_count]
+%           -   est_R – estimated neural time series [voxels x time]
+%           -   est_BOLD – estimated BOLD time series [voxels x time]
 
 function chunk = fitVoxels(measured_BOLD, I, HIRF, p, toggles)
 
