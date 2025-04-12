@@ -13,11 +13,13 @@
 %       time_series_chunks – cell array of time series data chunks
 %       chunk_indices – matrix of chunk indices
 
-function [time_series_chunks, chunk_indices] = chunkTimeSeries(num_rows, num_chunks, time_series_data)
+function [time_series_chunks, chunk_indices] = chunkTimeSeries(num_chunks, time_series_data)
 
     %% Create chunk indices
 
     chunk_indices = nan(num_chunks,2); % [starting row index, ending row index]
+    
+    num_rows = size(time_series_data,1);
     chunk_size = floor(num_rows/num_chunks);
     chunk_starts = 1:chunk_size:num_rows;
 
