@@ -13,7 +13,7 @@
 %       -   estimated BOLD time series [voxels x time]
 %       -   estimated R^2 values [voxels x 1]
 %       -   estimated SSE values [voxels x 1]
-%       -   exit flags [voxels x 1]
+%       -   fmincon exit flags [voxels x 1]
 
 function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
 
