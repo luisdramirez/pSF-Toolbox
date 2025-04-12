@@ -19,10 +19,6 @@ function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
 
     tic;
     
-    % Use time as rng seed
-    script_t.rng_seed = sum(100*clock);
-    rng(script_t.rng_seed);
-    
     % Add paths
     addpath('/functions');
     addpath('/script_modules');
@@ -87,10 +83,8 @@ function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
         'measured_BOLD', chunk_size);
 
     %% Chunk time series data
-        
-    total_num_vox = size(measured_BOLD,1);
-    
-    [measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(total_num_vox, num_chunks, measured_BOLD);
+
+    [measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(num_chunks, measured_BOLD);
 
     for chunk = 1:num_chunks
         chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
