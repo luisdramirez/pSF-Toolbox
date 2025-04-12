@@ -10,7 +10,9 @@ Boston University
 
 close all; clear variables; clc;
 
-%% Toggles
+addpath('functions');
+
+%% Settings
 
 % Plot settings
 font_type = 'Helvetica';
@@ -31,27 +33,16 @@ cond_colors = [blue; red; black]; % attend low sf, attend high sf, attend fixati
 
 %% Define pSFT model
 
-% Function handle example:
-% fx = @(x) x.^2
-% fx(3) = 9
-% R = exp(-((log(x) - log(mu)).^2) ./ ...
-%    (2 * sigma.^2));
-
-% Log gaussian function handle 
-log_gauss = @(params,sf) logGauss(params, sf);
-
-% Select function for pSFT model
-pSFT_model = log_gauss;
+pSFT_model = @(params,sf) logGauss(params, sf);
 
 %% Spatial frequency parameters
 
 sf_min = 0.1;
 sf_max = 12;
 sf_count = 1000;
-log_sf = logspace(log10(sf_min), log10(sf_max), sf_count); % Fine sample of presented SFs
-log_sf_exp = logspace(log10(sf_min), log10(sf_max), 40); % Experiment presented SFs
+log_sf = logspace(log10(sf_min), log10(sf_max), sf_count); 
 
-%% Individual pSFT
+%% Baseline pSFT
 
 % pSFT parameters
 mu = 1;
@@ -62,12 +53,13 @@ params = [mu, sigma];
 R = pSFT_model(params, log_sf);
 
 % Plot pSFT
-figure('Name','Baseline pSFT','Color',[1 1 1])
+figure('Name','Baseline pSFT','Color','w')
 
 plot(log_sf, R, 'Color', green);
 
 % Format figure
-xlabel('Spatial frequency (cpd)','FontName',font_type,'FontSize',axes_label_font_size); ylabel('Response (au)','FontName',font_type,'FontSize',axes_label_font_size);
+xlabel('Spatial frequency (cpd)','FontName',font_type,'FontSize',axes_label_font_size); 
+ylabel('Response (au)','FontName',font_type,'FontSize',axes_label_font_size);
 set(gca, 'TickDir','out', 'XScale','log','TickLength',[tick_length tick_length],'FontName',font_type,'FontSize',axes_tick_font_size);
 xticks([sf_min 1 5 sf_max]); xticklabels([sf_min 1 5 sf_max]); xlim([sf_min sf_max])
 yticks([0 0.5 1])
@@ -84,7 +76,7 @@ params_dec_mu = [mu / mu_dec, sigma];
 R_mu(2,:) = pSFT_model(params_dec_mu, log_sf);
 
 % Plot responses 
-figure('Color',[1 1 1],'Name', 'Change in peak')
+figure('Name', 'Change in peak','Color','w')
 
 plot(log_sf,R,'Color',green); hold on;
 
@@ -120,7 +112,7 @@ params_dec_sigma = [mu, sigma / sigma_dec];
 R_sigma(2,:) = pSFT_model(params_dec_sigma, log_sf);
 
 % Plot responses 
-figure('Color',[1 1 1],'Name', 'Change in bandwidth')
+figure('Name', 'Change in bandwidth','Color','w')
 
 plot(log_sf,R,'Color',green); hold on;
 
