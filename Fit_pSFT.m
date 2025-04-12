@@ -18,10 +18,6 @@
 function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
 
     tic;
-
-    curr_time = datetime;
-    curr_time.Format = 'MM.dd.yyyy_HHmm';
-    curr_time = char(curr_time);
     
     % Use time as rng seed
     script_t.rng_seed = sum(100*clock);
@@ -45,7 +41,7 @@ function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
     
     %% Parallelization setup for parfor loop
     
-    num_cores = 16;
+    num_cores = 8;
     num_chunks = num_cores-1;
     
     if toggles.parallelization
@@ -74,11 +70,11 @@ function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
     p.pSFT_bounds(1,:) = [6, 4, 25, 10];
     p.pSFT_bounds(2,:) = [0.009, 0.1, -25, -10]; 
   
-    %% Initialize chunks structure array 
+    %% Initialize 'chunks' structure array 
         
     chunk_size = cell(1, num_vox_chunks);    
 
-    chunks = struct('vox_inds', chunk_size, ...
+    chunks = struct('vox_indices', chunk_size, ...
         'param_est', chunk_size, ...    
         'est_SFT', chunk_size, ...
         'est_R', chunk_size, ...
@@ -98,7 +94,7 @@ function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
 
     for chunk = 1:num_chunks
         chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
-        chunks(chunk).vox_inds = vox_chunk_indices(chunk,:);
+        chunks(chunk).vox_indices = vox_chunk_indices(chunk,:);
     end
     
     %% Loop through chunks of voxels
@@ -127,6 +123,5 @@ function [pSFT, script_t] = Fit_pSFT(measured_BOLD, I, HIRF)
     elapsed_time = toc;
     script_t.elapsed_time = round(elapsed_time/60);
     disp(' '); disp(['Elapsed time: ~' num2str(script_t.elapsed_time) ' minute(s).']); disp(' ');
-
 
 end
