@@ -2,11 +2,11 @@
 %   Fits pSFT parameters to each voxel
 %
 %   Input Arguments
-%       measured_BOLD – matrix of measured BOLD time series [voxels x time]
+%       chunk – structure of chunked data (see estimatePSF.m)
 %       I – matrix of input spatial frequency time series [1 x time]
 %       HIRF – hemodynamic impulse response function [1 x time]
-%       p – structure of parameters (see Fit_pSFT.m)
-%       toggles – structure of toggles (see Fit_pSFT.m)
+%       p – structure of parameters (see estimatePSF.m)
+%       toggles – structure of toggles (see estimatePSF.m)
 %
 %   Output Arguments
 %       chunk – structure with fields:
@@ -20,9 +20,9 @@
 %           -   est_R – estimated neural time series [voxels x time]
 %           -   est_BOLD – estimated BOLD time series [voxels x time]
 
-function chunk = fitVoxels(measured_BOLD, I, HIRF, p, toggles)
+function chunk = fitVoxels(chunk, I, HIRF, p, toggles)
 
-    num_vox = size(measured_BOLD,1);
+    num_vox = size(chunk.measured_BOLD,1);
 
     %% Pre-allocate arrays
 
@@ -35,14 +35,14 @@ function chunk = fitVoxels(measured_BOLD, I, HIRF, p, toggles)
     tmp_r2 = nan(num_vox,1);
 
     tmp_est_SFT = nan(num_vox, p.sf_count);
-    tmp_est_R = nan(num_vox, size(measured_BOLD,2));
-    tmp_est_BOLD = nan(num_vox, size(measured_BOLD,2));
+    tmp_est_R = nan(num_vox, size(chunk.measured_BOLD,2));
+    tmp_est_BOLD = nan(num_vox, size(chunk.measured_BOLD,2));
 
     %% Loop through voxels
 
     for vox = 1:num_vox
         
-        curr_fixed_params_vox = {I, measured_BOLD(vox,:), HIRF};
+        curr_fixed_params_vox = {I, chunk.measured_BOLD(vox,:), HIRF};
         
         %% Coarse-to-fine grid search for starting pSFT parameters
         % pSFT params: [mu, sigma, beta, beta_0]
@@ -97,19 +97,21 @@ function chunk = fitVoxels(measured_BOLD, I, HIRF, p, toggles)
 
         %% Plot Voxel Fit
 
-        if toggles.make_voxel_pSFT_plots && ~toggles.parallelization
+        if toggles.make_voxel_plots
 
             %%% Spatial frequency tuning curve
-            figure('Name',['pSFT [Voxel #: ' num2str(vox) ']'],'Color', 'w');
+            figure('Name',['pSF [Voxel #: ' num2str(vox) ']'],'Color', 'w');
             set(gcf, 'position', [165   465   467   428])
             
-            semilogx(p.sfs, est_SFT);
+            semilogx(p.sfs, est_SFT, 'k');
             
             % Format figure
-            ylabel('BOLD (% change)'); xlabel('log[SF] (cpd)')
-            xticks([0.3 0.6 1.2 2.4 4.8 12]); xlim([0.28 13])
-            set(gcf,'color','w','TickDir','out'); box off;
-            title(['mu:' num2str(round(param_est(1),2)) ', sigma:' num2str(round(param_est(2),2))])
+            xlabel('log[SF] (cpd)'); ylabel('R');
+            xlim([p.sf_min p.sf_max]); ylim([0 1]);
+            xticks([p.sf_min 0.5 1 5 p.sf_max]); xticklabels([p.sf_min 0.5 1 5 p.sf_max]); 
+            yticks([0 0.5 1]);
+            set(gca,'TickDir','out'); box off;
+            title(['\mu = ' num2str(round(param_est(1),2)) ' | \sigma = ' num2str(round(param_est(2),2))])
             
 
             %%% Estimated voxel time series
@@ -120,14 +122,13 @@ function chunk = fitVoxels(measured_BOLD, I, HIRF, p, toggles)
             plot(est_BOLD,'r');
             
             % Format figure
-            ylabel('BOLD (% change)'); xlabel('Time (s)')
-            set(gcf,'color','w','TickDir','out'); box off;
-            title(['SSE:' num2str(round(tmp_sse(vox),2)) ', R^2:' num2str(round(tmp_r2(vox),2))])
+            xlabel('Time (s)'); ylabel('BOLD (% change)');
+            set(gca,'TickDir','out'); box off;
+            title(['R^2 = ' num2str(round(tmp_r2(vox),2)) ' | SSE = ' num2str(round(tmp_sse(vox)))])
             legend({'measured','estimate'})
             
 
-            pause; disp('Paused, press a key to continue...');
-            close all;
+            disp('Paused, press a key to continue...'); pause; close all;
 
         end
         
