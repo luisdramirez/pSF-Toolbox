@@ -94,43 +94,6 @@ function chunk = fitVoxels(chunk, I, HIRF, p, toggles)
         % Generate SFT curve
         est_SFT = logGauss(param_est, p.sfs);
         tmp_est_SFT(vox,:) = est_SFT;
-
-        %% Plot Voxel Fit
-
-        if toggles.make_voxel_plots
-
-            %%% Spatial frequency tuning curve
-            figure('Name',['pSF [Voxel #: ' num2str(vox) ']'],'Color', 'w');
-            set(gcf, 'position', [165   465   467   428])
-            
-            semilogx(p.sfs, est_SFT, 'k');
-            
-            % Format figure
-            xlabel('log[SF] (cpd)'); ylabel('R');
-            xlim([p.sf_min p.sf_max]); ylim([0 1]);
-            xticks([p.sf_min 0.5 1 5 p.sf_max]); xticklabels([p.sf_min 0.5 1 5 p.sf_max]); 
-            yticks([0 0.5 1]);
-            set(gca,'TickDir','out'); box off;
-            title(['\mu = ' num2str(round(param_est(1),2)) ' | \sigma = ' num2str(round(param_est(2),2))])
-            
-
-            %%% Estimated voxel time series
-            figure('Name',['Time Series [Voxel #: ' num2str(vox) ']'],'Color', 'w');
-            
-            plot(curr_fixed_params_vox{2},'k');
-            hold on
-            plot(est_BOLD,'r');
-            
-            % Format figure
-            xlabel('Time (s)'); ylabel('BOLD (% change)');
-            set(gca,'TickDir','out'); box off;
-            title(['R^2 = ' num2str(round(tmp_r2(vox),2)) ' | SSE = ' num2str(round(tmp_sse(vox)))])
-            legend({'measured','estimate'})
-            
-
-            disp('Paused, press a key to continue...'); pause; close all;
-
-        end
         
     end
 
