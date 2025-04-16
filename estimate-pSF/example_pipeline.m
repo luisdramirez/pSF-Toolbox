@@ -2,21 +2,27 @@
 
 %% Prepare workspace
 
-clear all; close all; clc;
+clear all; 
+close all; 
+clc;
 
 project_dir = pwd;
 save_dir = 'estimates';
 data_dir = 'data';
 figure_dir = 'figures';
 
-addpath([project_dir '/functions']);
-addpath([project_dir '/' data_dir]);    
+addpath(fullfile(project_dir, 'functions'));
+addpath(fullfile(project_dir, data_dir));    
 
-if exist([project_dir '/' save_dir], 'dir') == 0, mkdir([project_dir '/' save_dir]); end
-if exist([project_dir '/' figure_dir], 'dir') == 0, mkdir([project_dir '/' figure_dir]); end
+if ~exist(fullfile(project_dir, save_dir), 'dir')
+    mkdir(fullfile(project_dir, save_dir));
+end
+if ~exist(fullfile(project_dir, figure_dir), 'dir')
+    mkdir(fullfile(project_dir, figure_dir));
+end
 
-addpath([project_dir '/' save_dir]);
-addpath([project_dir '/' figure_dir]);
+addpath(fullfile(project_dir, save_dir));
+addpath(fullfile(project_dir, figure_dir));
 
 %% Toggles
 
@@ -61,7 +67,7 @@ p.pSFT_bounds(2,:) = [0.009, 0.1, -25, -10];
 
 %% Load data
 
-load('data/sample_data.mat');
+load(fullfile(data_dir, 'sample_data.mat'));
 
 num_subjs = length(sample_data);
 num_ROIs = size(sample_data(1).measured_BOLD, 3); % assumes all subjs have the same num ROIs
@@ -91,7 +97,7 @@ total_elapsed_time = 0;
 for subj = 1:num_subjs
     for roi = 1:num_ROIs
 
-        if toggles.disp_on, disp(['Estimating pSF for S' num2str(subj) ' V' num2str(roi) ' ...']); end
+        if toggles.disp_on, disp(['{ S' num2str(subj) ' V' num2str(roi) ' }']); end
 
         tic;    
 
@@ -173,6 +179,7 @@ if make_voxel_plots
                 end
    
             end
+            
         end
     end
 
