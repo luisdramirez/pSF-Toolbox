@@ -72,7 +72,7 @@ load(fullfile(data_dir, 'sample_data.mat'));
 num_subjs = length(sample_data);
 num_ROIs = size(sample_data(1).measured_BOLD, 3); % assumes all subjs have the same num ROIs
 
-%% Initialize pSF struct
+%% Initialize pSFT struct
 
 struct_size = cell(num_subjs, num_ROIs);    
 
@@ -88,7 +88,7 @@ all_pSF = struct('vox_indices', struct_size, ...
     'exitflag', struct_size, ...
     'measured_BOLD', struct_size);
 
-%% Estimate pSF
+%% Estimate pSFT
 
 HIRF = defineHRF();
 
@@ -101,8 +101,8 @@ for subj = 1:num_subjs
 
         tic;    
 
-        pSF = estimatePSF(sample_data(subj).measured_BOLD(:,:,roi), sample_data(subj).I, HIRF, p, toggles);
-        all_pSF(subj,roi) = pSF;
+        pSFT = estimatePSF(sample_data(subj).measured_BOLD(:,:,roi), sample_data(subj).I, HIRF, p, toggles);
+        all_pSF(subj,roi) = pSFT;
 
         elapsed_time = round(toc/60,1);
 
@@ -141,9 +141,9 @@ if make_voxel_plots
 
             for vox = 1:num_voxels
 
-                %% pSF curve
+                %% pSFT curve
 
-                figure_name = ['Vox #' num2str(vox) ' pSF'];
+                figure_name = ['Vox #' num2str(vox) ' pSFT'];
                 
                 semilogx(p.sfs, all_pSF(subj,roi).est_SFT(:, vox), 'k');
             
