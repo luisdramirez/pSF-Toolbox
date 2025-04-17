@@ -10,13 +10,13 @@
 %
 %   Output Arguments
 %       chunk – structure with fields:
-%           -   start_values – initial pSFT parameters [voxels x 4]
-%           -   start_sse – initial SSE values [voxels x 1]
-%           -   param_est – estimated pSFT parameters [voxels x 4]
-%           -   exitflag – fmincon exit flags [voxels x 1]
-%           -   sse – SSE values [voxels x 1]
-%           -   r2 – R^2 values [voxels x 1]
-%           -   est_SFT – estimated SFT curves [voxels x sf_count]
+%           -   start_values – initial pSFT parameters [4 x voxels]
+%           -   start_sse – initial SSE values [1 x voxels]
+%           -   param_est – estimated pSFT parameters [4 x voxels]
+%           -   exitflag – fmincon exit flags [1 x voxels]
+%           -   sse – SSE values [1 x voxels]
+%           -   r2 – R^2 values [1 x voxels]
+%           -   est_SFT – estimated SFT curves [sf_count x voxels]
 %           -   est_R – estimated neural time series [time x voxels]
 %           -   est_BOLD – estimated BOLD time series [time x voxels]
 
