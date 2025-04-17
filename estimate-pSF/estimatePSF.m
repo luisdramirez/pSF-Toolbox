@@ -1,5 +1,5 @@
 % estimatePSF 
-%   Estimates pSF parameters from voxel time series via fmincon()
+%   Estimates pSFT parameters from voxel time series via fmincon()
 %
 %   Inputs:
 %       measured_BOLD - voxel time series [time x voxels]
@@ -9,16 +9,16 @@
 %       toggles - structure of toggles (see example_pipeline.m)
 %
 %   Outputs:
-%       pSF - struct containing: 
-%       -   estimated pSF parameters [4 x voxels]
-%       -   estimated pSF curves [sf_count x voxels]
+%       pSFT - struct containing: 
+%       -   estimated pSFT parameters [4 x voxels]
+%       -   estimated pSFT curves [sf_count x voxels]
 %       -   estimated neural time series [time x voxels]
 %       -   estimated BOLD time series [time x voxels]
 %       -   estimated R^2 values [1 x voxels]
 %       -   estimated SSE values [1 x voxels]
 %       -   fmincon exit flags [1 x voxels]
 
-function pSF = estimatePSF(measured_BOLD, I, HIRF, p, toggles)
+function pSFT = estimatePSF(measured_BOLD, I, HIRF, p, toggles)
 
     if toggles.disp_on, disp('Initializing estimatePSF ...'); end
 
@@ -72,7 +72,7 @@ function pSF = estimatePSF(measured_BOLD, I, HIRF, p, toggles)
     field_names = fieldnames(chunks);
 
     for i_field = 1:length(field_names)
-        pSF.(field_names{i_field}) = cat(2, chunks.(field_names{i_field}));
+        pSFT.(field_names{i_field}) = cat(2, chunks.(field_names{i_field}));
     end
 
 end
