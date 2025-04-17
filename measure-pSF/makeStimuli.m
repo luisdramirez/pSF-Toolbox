@@ -14,7 +14,7 @@
 %       stimulus – structure containing stimulus parameters
 %       filter – structure containing filter parameters and masks
 
-function [textures, stimulus, filter] = makeStimuli(image_size_px, ppd, px_size)
+function [textures, stimulus, filter] = makeStimuli(image_size_px, ppd, px_size, save_textures, save_dir)
     
     %% Stimulus parameters
 
@@ -30,7 +30,7 @@ function [textures, stimulus, filter] = makeStimuli(image_size_px, ppd, px_size)
     filter.min = 0.1;
     filter.max = 12;
     filter.width = 0.1;
-    filter.gauss_sd = 0.1*ppd;
+    filter.gauss_smoothening_sd = 0.1*ppd;
 
     filter.centers = 10.^linspace(log10(filter.min), log10(filter.max), filter.count);
     filter.lower_bound = filter.centers - filter.width;
@@ -46,24 +46,44 @@ function [textures, stimulus, filter] = makeStimuli(image_size_px, ppd, px_size)
     for n_filter = 1:filter.count
 
         sf_bp_filter = Bandpass2(image_size_px, filter.lower_bound(n_filter)/filter.f_Nyquist, filter.upper_bound(n_filter)/filter.f_Nyquist);
-        sf_bp_filter = imgaussfilt(sf_bp_filter, filter.gauss_sd);
+        sf_bp_filter = imgaussfilt(sf_bp_filter, filter.gauss_smoothening_sd);
         sf_bp_filter_norm = (sf_bp_filter - min(sf_bp_filter(:))) ./ (max(sf_bp_filter(:)) - min(sf_bp_filter(:)));
         
         filter.masks(:, :, n_filter) = sf_bp_filter_norm;
         
         for n_noise_sample = 1:stimulus.noise_sample_count
 
-            init_noise = 2*rand(image_size_px)-1; 
+            init_noise = 2 * rand(image_size_px) - 1; 
             fft_noise = fftshift(fft2(init_noise));
 
-            filtered_noise = filter.masks(:, :, n_filter) .* fft_noise; 
+            filtered_noise = sf_bp_filter_norm .* fft_noise; 
             filtered_noise = ifft2(ifftshift(filtered_noise));
-            filtered_noise = (filtered_noise - min(filtered_noise(:)))./max(filtered_noise(:));
-            filtered_noise = abs(filtered_noise * stimulus.contrast * gray + gray);
+            filtered_noise = abs(filtered_noise);
+            filtered_noise = filtered_noise - mean(filtered_noise(:));
+
+            max_value = max(abs(filtered_noise(:)));
+
+            if max_value > 0
+                filtered_noise = filtered_noise / (2 * max_value);
+            end
+
+            filtered_noise = gray * (1 + filtered_noise * 2 * stimulus.contrast);
 
             textures(:, :, n_filter, n_noise_sample) = filtered_noise;
 
         end
+
+    end
+
+    %% Save textures
+
+    if save_textures
+        
+        if ~exist(save_dir, 'dir')
+            mkdir(save_dir);
+        end
+
+        save(fullfile(save_dir, 'pSF_stimuli.mat'), 'textures', 'stimulus', 'filter');
 
     end
 
