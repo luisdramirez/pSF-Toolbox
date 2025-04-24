@@ -2,3 +2,4 @@
 *.png
 estimate-pSF/estimates/sample_estimates.mat
 /estimate-pSF-amplitude
+/estimate-pSF/estimates
