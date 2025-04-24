@@ -3,3 +3,5 @@
 estimate-pSF/estimates/sample_estimates.mat
 /estimate-pSF-amplitude
 /estimate-pSF/estimates
+estimate-pSF/data/sample_data_psft_fba_fixation.mat
+estimate-pSF/data/sample_data_psft_arousal_fixation.mat
