@@ -2,18 +2,17 @@
 %   Assumes the time series data shape is a 2D matrix with time along the columns.
 %
 %   Syntax
-%       [time_series_chunks, chunk_indices] = chunkTimeSeries(num_rows, num_chunks, time_series_data)
+%       [time_series_chunks, chunk_indices] = chunkTimeSeries(time_series_data, num_chunks)
 %
 %   Input Arguments
-%       num_rows – number of rows in the time series data
-%       num_chunks – number of chunks to create
 %       time_series_data – time series data [time x voxels]
+%       num_chunks – number of chunks to create
 %
 %   Output Arguments
 %       time_series_chunks – cell array of time series data chunks
 %       chunk_indices – matrix of chunk indices
 
-function [time_series_chunks, chunk_indices] = chunkTimeSeries(num_chunks, time_series_data)
+function [time_series_chunks, chunk_indices] = chunkTimeSeries(time_series_data, num_chunks)
 
     %% Create chunk indices
 
