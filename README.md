@@ -45,11 +45,18 @@ This is the main high-level function for estimating pSF parameters. It takes the
 - SSE values
 - `fmincon` exit flags
 
-Toggles and settings to make note of that should be defined before entering this function (see `example_pipeline.m`):
+Below are toggles and parameters to make note of that MUST be defined before entering `estimatePSF.m` (see `example_pipeline.m`).
+
+Toggles:
 - Parallelization (true/false)
 - Coarse grid search (true/false)
 - Fine grid search (true/false)
+
+Parameters:
 - Spatial frequency range used to generate tuning curves 
-- Initial pSF parameters
-- pSF parameter bounds
+	- `p.sfs`
+- Initial pSFT parameters
+	- `p.init_params`
+- pSFT parameter bounds
+	- `p.pSFT_bounds`
 
