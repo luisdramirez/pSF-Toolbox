@@ -97,7 +97,7 @@ total_elapsed_time = 0;
 for subj = 1:num_subjs
     for roi = 1:num_ROIs
 
-        if toggles.disp_on, disp(['{ S' num2str(subj) ' V' num2str(roi) ' }']); end
+        if toggles.disp_on, disp(['++++ S' num2str(subj) ' V' num2str(roi) ' ++++']); end
 
         tic;    
 
@@ -126,7 +126,7 @@ end
 
 if make_voxel_plots
 
-    num_voxels = 2;
+    num_voxels = 1;
 
     fg = figure('Visible','on','Color','w');
     set(0,'CurrentFigure',fg);
@@ -159,7 +159,7 @@ if make_voxel_plots
                     if toggles.disp_on, disp(['Saved ' figure_name '.png in /' figure_path]); end
                 end
 
-                %% voxel time series
+                %% Voxel time series
 
                 figure_name = ['Vox #' num2str(vox) ' BOLD Time Series'];
                 
