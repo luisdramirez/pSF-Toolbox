@@ -35,6 +35,10 @@ save_pSF = true;
 make_voxel_plots = true;
 save_voxel_plots = true;
 
+%% Check for required toolboxes
+
+checkRequiredToolboxes(toggles);
+
 %% Parallelization setup for parfor loop
 
 p.num_cores = 8;
