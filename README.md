@@ -10,6 +10,27 @@ We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimati
 
 **!! Note that the shape of the time series data must have time along the first dimension (e.g., time point x voxel) !!**
 
+### `/estimate-pSF`
+This directory contains scripts for estimating pSF parameters from fMRI data.
+-   `estimatePSF.m`: Main function for pSF parameter estimation. Takes measured BOLD, stimulus SF time series, and HIRF as input. Returns estimated parameters, curves, time series, and goodness-of-fit metrics. See more info in dedicated section below. 
+-   `example_pipeline.m`: Demonstrates a complete workflow for estimating pSF parameters using sample data. Includes setting up estimation parameters (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
+-   `functions/`: Contains core functions used by the estimation scripts:
+    -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`.
+    -   `logGauss`: Defines the log Gaussian function for the pSF tuning curve.
+    -   `calcFit`: Computes SSE.
+    -   `defineHRF`: Creates a canonical HRF model.
+    -   `gridSearch`: Implements grid search for initial parameter estimates.
+    -   `chunkTimeSeries`: Splits time series for parallel processing.
+    -   `cpd2oct`: Converts bandwidth from cpd to octaves.
+-   `simulate_pSF.m`: Useful for generating synthetic tuning curves.
+
+### `/measure-pSF`
+This directory provides scripts for presenting stimuli using Psychtoolbox to measure pSF tuning.
+-   `run_scan.m`: Main script for running the pSF experiment. Handles stimulus presentation, timing, and response collection (if applicable). Requires configuration based on experimental setup.
+-   `functions/`: Contains supporting functions for stimulus generation, display, and experimental control.
+-   `stimuli/`: Likely contains stimulus definitions or generation scripts (e.g., grating parameters).
+-   `data/`: Intended for storing acquired experimental data.
+
 ### estimatePSF
 This is the main high-level function for estimating pSF parameters. It takes the measured BOLD time series, the stimulus spatial frequency time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSF` containing:
 - estimated pSF parameters (peak SF, bandwidth, BOLD amplitude, baseline)
@@ -27,17 +48,3 @@ Toggles and settings to make note of that should be defined before entering this
 - Spatial frequency range used to generate tuning curves 
 - Initial pSF parameters
 - pSF parameter bounds
-
-### fitVoxels
-This function performs the voxel-wise pSF parameter estimation using `fmincon`.
-
-### Utility Functions
-*   `logGauss`: Defines the log Gaussian function used to model the population spatial frequency tuning curve.
-*   `calcFit`: Computes goodness-of-fit statistics, R-squared ($R^2$) and Sum of Squared Errors (SSE), to evaluate how well the estimated BOLD data — derived from the pSF model — explains the measured BOLD data.
-*   `defineHRF`: Creates a canonical hemodynamic response function (HRF) model, which is used to convolve the predicted neural response to estimate the BOLD signal.
-*   `gridSearch`: Implements a grid search algorithm to find suitable starting parameters for the more complex non-linear optimization performed in `fitVoxels`.
-*   `chunkTimeSeries`: Splits large time series datasets into smaller, more manageable chunks for parallel processing.
-*   `cpd2oct`: Calculates the pSF bandwidth in octave units from the half-maximum spatial frequencies in cycles per degree (cpd).
-
-
-### simulate_pSF.m
