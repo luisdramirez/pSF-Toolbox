@@ -14,16 +14,16 @@ rng('shuffle');
 t.my_rng_seed = rng;
 
 % Input device name
-% p.device_string = 'Apple Internal Keyboard / Trackpad';
-p.device_string = 'USB-HID Keyboard'; 
+p.device_string = 'Apple Internal Keyboard / Trackpad';
+% p.device_string = 'USB-HID Keyboard'; 
 % p.device_string ='Current Designs, Inc. 932';
 
 %% Set toggles
 
+toggles.macOS = true;
 toggles.gamma_correction = false;
 toggles.save_textures = true;
 toggles.save_run_info = true;
-toggles.macOS = true;
 
 %% Set subject ID and number of runs
 
