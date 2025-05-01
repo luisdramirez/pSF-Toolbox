@@ -1,14 +1,21 @@
 # Population spatial frequency Toolbox
 
-The pSF Toolbox streamlines the population spatial frequency (pSF) tuning approach, originally developed by [Aghajari, Vinke, & Ling 2020 (Journal of Neurophysiology)](https://doi.org/10.1152/jn.00291.2019), with accessibility in mind. 
+The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) approach, originally developed by [Aghajari, Vinke, & Ling 2020 (Journal of Neurophysiology)](https://doi.org/10.1152/jn.00291.2019), with accessibility in mind. 
 
-We provide a suite of scripts that estimate and simulate pSF (`/estimate-pSF`), and for stimulus presentation via [Psychtoolbox](http://psychtoolbox.org) when measuring pSF (`/measure-pSF`). 
+We provide a suite of scripts for parameter estimation (`/estimate-pSF`) and stimulus presentation via [Psychtoolbox](http://psychtoolbox.org) to measure pSF (`/measure-pSF`) with functional magnetic resonance imaging. 
 
 We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimating pSF from a sample dataset (SF input and measured BOLD time series for two subjects — 100 voxels per ROI (V1–V3)).
-
 `sample_data` is organized as a structure array with fields `I` and `measured_BOLD`. 
-
 **!! Note that the shape of the time series data must have time along the first dimension (e.g., time point x voxel) !!**
+
+We also provide an example scan session (`/measure-pSF/run_session.m`) for data acquisition. 
+
+### `/measure-pSF`
+This directory provides scripts for presenting stimuli using Psychtoolbox to measure pSFT.
+-   `run_session.m`: Main script for running the experiment. Handles stimulus presentation, timing, and response collection. Requires configuration based on experimental setup.
+-   `functions/`: Contains supporting functions for stimulus generation, display, and experimental control.
+-   `stimuli/`: Stimulus textures will be stored here by default.
+-   `data/`: Experimental run info will be stored here by default.
 
 ### `/estimate-pSF`
 This directory contains scripts for estimating pSF parameters from fMRI data.
@@ -23,13 +30,6 @@ This directory contains scripts for estimating pSF parameters from fMRI data.
     -   `chunkTimeSeries`: Splits time series for parallel processing.
     -   `cpd2oct`: Converts bandwidth from cpd to octaves.
 -   `simulate_pSF.m`: Useful for generating synthetic tuning curves.
-
-### `/measure-pSF`
-This directory provides scripts for presenting stimuli using Psychtoolbox to measure pSF tuning.
--   `run_scan.m`: Main script for running the pSF experiment. Handles stimulus presentation, timing, and response collection (if applicable). Requires configuration based on experimental setup.
--   `functions/`: Contains supporting functions for stimulus generation, display, and experimental control.
--   `stimuli/`: Likely contains stimulus definitions or generation scripts (e.g., grating parameters).
--   `data/`: Intended for storing acquired experimental data.
 
 ### estimatePSF
 This is the main high-level function for estimating pSF parameters. It takes the measured BOLD time series, the stimulus spatial frequency time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSF` containing:
@@ -48,3 +48,4 @@ Toggles and settings to make note of that should be defined before entering this
 - Spatial frequency range used to generate tuning curves 
 - Initial pSF parameters
 - pSF parameter bounds
+
