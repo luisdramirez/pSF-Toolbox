@@ -6,6 +6,7 @@ We provide a suite of scripts for parameter estimation (`/estimate-pSF`) and sti
 
 We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimating pSF from a sample dataset (SF input and measured BOLD time series for two subjects — 100 voxels per ROI (V1–V3)).
 `sample_data` is organized as a structure array with fields `I` and `measured_BOLD`. 
+
 **!! Note !!**
 - **The Optimization Toolbox and The Parallel Computing Toolbox for MATLAB MUST be installed to take advantage of the parameter estimation pipeline and parallelization, respectively! Psychtoolbox-3 MUST be installed for stimulus presentation via `/measure-pSF`**
 - **The shape of the time series data MUST have time along the first dimension (e.g., time point x voxel)**
