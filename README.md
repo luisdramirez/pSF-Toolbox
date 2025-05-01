@@ -8,10 +8,10 @@ We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimati
 `sample_data` is organized as a structure array with fields `I` and `measured_BOLD`. 
 **!! Note that the shape of the time series data must have time along the first dimension (e.g., time point x voxel) !!**
 
-We also provide an example scan session (`/measure-pSF/run_session.m`) for data acquisition. 
+We also provide an example scan session script (`/measure-pSF/run_session.m`) for data acquisition. 
 
 ### `/measure-pSF`
-This directory provides scripts for presenting stimuli using Psychtoolbox to measure pSFT.
+This directory contains scripts for excecuting the experiment via Psychtoolbox.
 -   `run_session.m`: Main script for running the experiment. Handles stimulus presentation, timing, and response collection. Requires configuration based on experimental setup.
 -   `functions/`: Contains supporting functions for stimulus generation, display, and experimental control.
 -   `stimuli/`: Stimulus textures will be stored here by default.
