@@ -8,7 +8,7 @@ We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimati
 `sample_data` is organized as a structure array with fields `I` and `measured_BOLD`. 
 **!! Note !!**
 - **The Optimization Toolbox and The Parallel Computing Toolbox for MATLAB MUST be installed to take advantage of the parameter estimation pipeline and parallelization, respectively! Psychtoolbox-3 MUST be installed for stimulus presentation via `/measure-pSF`**
-- ** The shape of the time series data MUST have time along the first dimension (e.g., time point x voxel)**
+- **The shape of the time series data MUST have time along the first dimension (e.g., time point x voxel)**
 
 We also provide an example scan session script (`/measure-pSF/run_session.m`) for data acquisition. 
 
