@@ -44,7 +44,7 @@ function pSFT = estimatePSF(measured_BOLD, I, HIRF, p, toggles)
 
     if toggles.disp_on, disp('Chunking time series data...'); end
 
-    [measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(p.num_chunks, measured_BOLD);
+    [measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(measured_BOLD, p.num_chunks);
 
     for chunk = 1:p.num_chunks
         chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
