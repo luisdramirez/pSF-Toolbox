@@ -6,6 +6,7 @@ We provide a suite of scripts for parameter estimation (`/estimate-pSF`) and sti
 
 We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimating pSF from a sample dataset (SF input and measured BOLD time series for two subjects — 100 voxels per ROI (V1–V3)).
 `sample_data` is organized as a structure array with fields `I` and `measured_BOLD`. 
+
 We also provide an example scan session script (`/measure-pSF/run_session.m`) for data acquisition. 
 
 **!! Requirements !!**
@@ -45,7 +46,7 @@ This is the main high-level function for estimating pSF parameters. It takes the
 - SSE values
 - `fmincon` exit flags
 
-Below are toggles and parameters to make note of that MUST be defined before entering `estimatePSF.m` (see `example_pipeline.m`).
+Below are toggles and parameters that MUST be defined before entering `estimatePSF.m` (see `example_pipeline.m`).
 
 Toggles:
 - Parallelization (true/false)
@@ -53,10 +54,7 @@ Toggles:
 - Fine grid search (true/false)
 
 Parameters:
-- Spatial frequency range used to generate tuning curves 
-	- `p.sfs`
-- Initial pSFT parameters
-	- `p.init_params`
-- pSFT parameter bounds
-	- `p.pSFT_bounds`
+- Spatial frequencies used to generate tuning curves (`p.sfs`)
+- Initial pSFT parameters (`p.init_params`)
+- pSFT parameter bounds (`p.pSFT_bounds`)
 
