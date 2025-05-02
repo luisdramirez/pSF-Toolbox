@@ -1,25 +1,27 @@
-# Population spatial frequency Toolbox
+# Population Spatial Frequency Toolbox
 
 The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) approach, originally developed by [Aghajari, Vinke, & Ling 2020 (Journal of Neurophysiology)](https://doi.org/10.1152/jn.00291.2019), with accessibility in mind. 
 
 **Requirements**
-- The Optimization Toolbox for MATLAB must be installed for parameter optimization.
 - Psychtoolbox-3 must be installed for stimulus presentation.
+- The Optimization Toolbox for MATLAB must be installed for parameter optimization.
 - The shape of the BOLD percent signal change time series data must have time along the first dimension (i.e., time points x voxels).
 - **Strongly recommended**: The Parallel Computing Toolbox for MATLAB must be installed for parallelization.
 
-You'll find a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSF`) and (2) voxel-wise parameter optimization (see `/estimate-pSF`). 
+We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSF`) and (2) voxel-wise parameter optimization (see `/estimate-pSF`). 
  
 
 ### `/measure-pSF`
 This directory contains scripts for executing the experiment via Psychtoolbox.
-We provide an example scan session script for data acquisition (see `/measure-pSF/run_session.m`).  
+We provide an example scan session script for data acquisition (see `/measure-pSF/run_session.m`) that the user can modify with respect to their experimental setup.  
+For example, the input device name, toggles, subject ID, directories, and screen parameters should be confirmed. 
+
 Critical functions include `prepareScan` and `presentStimuli`. 
-Users will find key stimulus and timing parameters inside `prepareScan`. 
-For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` or `p.aperture_radius_px`; to match the scan length, `t.TR` must match the duration of the repetition time.   
+Users will find key stimulus and timing parameters inside `prepareScan`. For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` or `p.aperture_radius_px`; to match the fMRI scan length, `t.TR` must match the duration of the repetition time.   
+
 
 -   `functions/`: Contains supporting functions for stimulus generation, display, and experimental control.
-    -   `checkPTB`: Verifies Psychtoolbox installation and setup.
+    -   `checkPTB`: Verifies Psychtoolbox installation.
     -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window for a scan.
     -   `createTextures`: Generates bandpass-filtered noise textures for stimuli.
     -   `createApertures`: Creates stimulus and fixation apertures.
