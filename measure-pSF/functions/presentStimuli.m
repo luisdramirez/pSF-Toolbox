@@ -20,9 +20,9 @@ function run_info = presentStimuli(p, w, t, stimuli, frames)
         
     %% Generate presentation sequences
 
-    p.sf_pres_order = nan(p.noise_filter_count, p.num_blocks);
+    p.I = nan(p.noise_filter_count, p.num_blocks);
     for n_block = 1:p.num_blocks
-        p.sf_pres_order(:,n_block) = datasample(1:p.noise_filter_count, p.noise_filter_count, 'Replace', false); 
+        p.I(:,n_block) = datasample(1:p.noise_filter_count, p.noise_filter_count, 'Replace', false); 
     end
 
     %% Wait for trigger 
@@ -80,7 +80,7 @@ function run_info = presentStimuli(p, w, t, stimuli, frames)
         
         if frames.block(n_frame)
 
-            Screen('DrawTexture', w.window, stimuli.pSF_textures_made(p.sf_pres_order(sf_indx, n_block), noise_sample_indx), [], stimuli.pSF_stimuli_patch);
+            Screen('DrawTexture', w.window, stimuli.pSF_textures_made(p.I(sf_indx, n_block), noise_sample_indx), [], stimuli.pSF_stimuli_patch);
             Screen('DrawTexture', w.window, stimuli.stimulus_aperture_made, [], stimuli.stimulus_aperture_patch);
             Screen('DrawTexture', w.window, stimuli.fixation_aperture_made, [], stimuli.fixation_aperture_patch);
             Screen('FillOval', w.window, fixation_color, stimuli.fixation_dot_patch);
