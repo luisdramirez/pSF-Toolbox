@@ -80,7 +80,7 @@ num_ROIs = size(sample_data(1).measured_BOLD, 3); % assumes all subjs have the s
 
 struct_size = cell(num_subjs, num_ROIs);    
 
-all_pSF = struct('vox_indices', struct_size, ...
+all_pSFT = struct('vox_indices', struct_size, ...
     'param_est', struct_size, ...    
     'est_SFT', struct_size, ...
     'est_R', struct_size, ...
@@ -106,7 +106,7 @@ for subj = 1:num_subjs
         tic;    
 
         pSFT = estimatePSF(sample_data(subj).measured_BOLD(:,:,roi), sample_data(subj).I, HIRF, p, toggles);
-        all_pSF(subj,roi) = pSFT;
+        all_pSFT(subj,roi) = pSFT;
 
         elapsed_time = round(toc/60,1);
 
@@ -120,10 +120,10 @@ end
 if toggles.disp_on, disp(['Total elapsed time: ~' num2str(total_elapsed_time) ' minutes']); end
 if toggles.parallelization, delete(gcp); end
 
-if save_pSF
+if save_pSFT
     curr_time = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
-    save([save_dir '/all_pSF_n' num2str(num_subjs) '_' char(curr_time) '.mat'], 'all_pSF');
-    if toggles.disp_on, disp(['Saved all_pSF.mat in /' save_dir]); end
+    save([save_dir '/all_pSFT_n' num2str(num_subjs) '_' char(curr_time) '.mat'], 'all_pSFT');
+    if toggles.disp_on, disp(['Saved all_pSFT.mat in /' save_dir]); end
 end
 
 %% Plot voxel fits
@@ -149,14 +149,14 @@ if make_voxel_plots
 
                 figure_name = ['Vox #' num2str(vox) ' pSFT'];
                 
-                semilogx(p.sfs, all_pSF(subj,roi).est_SFT(:, vox), 'k');
+                semilogx(p.sfs, all_pSFT(subj,roi).est_SFT(:, vox), 'k');
             
                 % Format figure
                 xlabel('log[SF] (cpd)'); ylabel('R');
                 xlim([p.sf_min p.sf_max]); ylim([0 1]);
                 xticks([p.sf_min 0.5 1 5 p.sf_max]); xticklabels([p.sf_min 0.5 1 5 p.sf_max]); 
                 set(gca,'TickDir','out'); box off;
-                title(['\mu = ' num2str(round(all_pSF(subj,roi).param_est(1,vox),2)) ' | \sigma = ' num2str(round(all_pSF(subj,roi).param_est(2,vox),2))])
+                title(['\mu = ' num2str(round(all_pSFT(subj,roi).param_est(1,vox),2)) ' | \sigma = ' num2str(round(all_pSFT(subj,roi).param_est(2,vox),2))])
                 
                 if save_voxel_plots 
                     saveas(gcf,[figure_path '/' figure_name '.png']); clf; 
@@ -167,14 +167,14 @@ if make_voxel_plots
 
                 figure_name = ['Vox #' num2str(vox) ' BOLD Time Series'];
                 
-                plot(all_pSF(subj,roi).measured_BOLD(:,vox),'k');
+                plot(all_pSFT(subj,roi).measured_BOLD(:,vox),'k');
                 hold on
-                plot(all_pSF(subj,roi).est_BOLD(:,vox),'r');
+                plot(all_pSFT(subj,roi).est_BOLD(:,vox),'r');
                 
                 % Format figure
                 xlabel('Time (s)'); ylabel('BOLD (% change)');
                 set(gca,'TickDir','out'); box off;
-                title(['R^2 = ' num2str(round(all_pSF(subj,roi).r2(vox),2))])
+                title(['R^2 = ' num2str(round(all_pSFT(subj,roi).r2(vox),2))])
                 legend({'measured','estimate'})
     
                 if save_voxel_plots 
