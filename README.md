@@ -2,49 +2,54 @@
 
 The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) approach, originally developed by [Aghajari, Vinke, & Ling 2020 (Journal of Neurophysiology)](https://doi.org/10.1152/jn.00291.2019), with accessibility in mind. 
 
-We provide a suite of scripts for parameter estimation (`/estimate-pSF`) and stimulus presentation via [Psychtoolbox](http://psychtoolbox.org) to measure pSF (`/measure-pSF`) with functional magnetic resonance imaging. 
+**Requirements**
+- The Optimization Toolbox for MATLAB must be installed for parameter optimization.
+- Psychtoolbox-3 must be installed for stimulus presentation.
+- The shape of the BOLD percent signal change time series data must have time along the first dimension (i.e., time points x voxels).
+- **Strongly recommended**: The Parallel Computing Toolbox for MATLAB must be installed for parallelization.
 
-We include an example workflow (`/estimate-pSF/example_pipeline.m`) for estimating pSF from a sample dataset (SF input and measured BOLD time series for two subjects — 100 voxels per ROI (V1–V3)).
-`sample_data` is organized as a structure array with fields `I` and `measured_BOLD`. 
-
-We also provide an example scan session script (`/measure-pSF/run_session.m`) for data acquisition. 
-
-**!! Requirements !!**
-- **The Optimization Toolbox and The Parallel Computing Toolbox for MATLAB MUST be installed to take advantage of the parameter estimation pipeline and parallelization, respectively!** 
-- **Psychtoolbox-3 MUST be installed for stimulus presentation via `/measure-pSF`**
-- **The shape of the time series data MUST have time along the first dimension (e.g., time point x voxel)**
-
+You'll find a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSF`) and (2) voxel-wise parameter optimization (see `/estimate-pSF`). 
+ 
 
 ### `/measure-pSF`
 This directory contains scripts for executing the experiment via Psychtoolbox.
--   `run_session.m`: Main script for running the experiment. Handles stimulus presentation, timing, and response collection. Requires configuration based on experimental setup.
+We provide an example scan session script for data acquisition (see `/measure-pSF/run_session.m`).  
+Critical functions include `prepareScan` and `presentStimuli`. 
+Users will find key stimulus and timing parameters inside `prepareScan`. 
+For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` or `p.aperture_radius_px`; to match the scan length, `t.TR` must match the duration of the repetition time.   
+
 -   `functions/`: Contains supporting functions for stimulus generation, display, and experimental control.
+    -   `checkPTB`: Verifies Psychtoolbox installation and setup.
+    -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window for a scan.
+    -   `createTextures`: Generates bandpass-filtered noise textures for stimuli.
+    -   `createApertures`: Creates stimulus and fixation apertures.
+    -   `genFrames`: Defines the sequence of events and timing for each experimental frame.
+    -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
 -   `stimuli/`: Stimulus textures will be stored here by default.
 -   `data/`: Experimental run info will be stored here by default.
 
 ### `/estimate-pSF`
-This directory contains scripts for estimating pSF parameters from fMRI data.
--   `estimatePSF.m`: Main function for pSF parameter estimation. Takes measured BOLD, stimulus SF time series, and HIRF as input. Returns estimated parameters, curves, time series, and goodness-of-fit metrics. See more info in dedicated section below. 
--   `example_pipeline.m`: Demonstrates a complete workflow for estimating pSF parameters using sample data. Includes setting up estimation parameters (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
+This directory contains scripts for estimating pSFT parameters from fMRI data.
+We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSF/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
+
+-   `estimatePSF.m`: This is the main high-level function for estimating pSFT parameters. It takes the measured BOLD time series, the stimulus spatial frequency time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSFT` containing:
+    - estimated pSFT parameters (peak SF, bandwidth, BOLD amplitude, baseline)
+    - estimated pSFT curves
+    - estimated neural time series
+    - estimated BOLD time series
+    - $R^2$ values
+    - SSE values
+    - `fmincon` exit flags
+-   `example_pipeline.m`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation parameters (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
 -   `functions/`: Contains core functions used by the estimation scripts:
     -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`.
-    -   `logGauss`: Defines the log Gaussian function for the pSF tuning curve.
+    -   `logGauss`: Defines the log Gaussian function for the pSFT tuning curve.
     -   `calcFit`: Computes SSE.
     -   `defineHRF`: Creates a canonical HRF model.
     -   `gridSearch`: Implements grid search for initial parameter estimates.
     -   `chunkTimeSeries`: Splits time series for parallel processing.
     -   `cpd2oct`: Converts bandwidth from cpd to octaves.
 -   `simulate_pSF.m`: Useful for generating synthetic tuning curves.
-
-### estimatePSF
-This is the main high-level function for estimating pSF parameters. It takes the measured BOLD time series, the stimulus spatial frequency time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSF` containing:
-- estimated pSF parameters (peak SF, bandwidth, BOLD amplitude, baseline)
-- estimated pSF curves
-- estimated neural time series
-- estimated BOLD time series
-- $R^2$ values
-- SSE values
-- `fmincon` exit flags
 
 Below are toggles and parameters that MUST be defined before entering `estimatePSF.m` (see `example_pipeline.m`).
 
