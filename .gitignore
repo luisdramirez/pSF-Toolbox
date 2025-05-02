@@ -2,6 +2,6 @@
 *.png
 /estimate-pSF-amplitude
 /estimate-pSF/estimates
-estimate-pSF/data/
+estimate-pSF/data/sample_data_*
 measure-pSF/data/
 measure-pSF/stimuli/
