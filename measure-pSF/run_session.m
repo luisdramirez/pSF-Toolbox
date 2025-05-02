@@ -13,17 +13,18 @@ t.the_time = string(datetime('now', 'Format', 'HHmm'));
 rng('shuffle');
 t.my_rng_seed = rng;
 
-% Input device name
+%% Input device name
+
 p.device_string = 'Apple Internal Keyboard / Trackpad';
 % p.device_string = 'USB-HID Keyboard'; 
 % p.device_string ='Current Designs, Inc. 932';
 
-%% Set toggles
+%% Toggles
 
-toggles.macOS = true;
+toggles.macOS = true; % If true, will skip psychtoolbox sync test 
 toggles.gamma_correction = false;
-toggles.save_textures = true;
-toggles.save_run_info = true;
+toggles.save_textures = false;
+toggles.save_run_info = false;
 
 %% Set subject ID and number of runs
 
@@ -38,6 +39,10 @@ dirs.stimuli_dir = fullfile(dirs.script_dir, 'stimuli');
 dirs.data_dir = fullfile(dirs.script_dir, 'data');
 dirs.subj_dir = fullfile(dirs.data_dir, ['S' p.subj_ID]);
 dirs.corrected_CLUT_dir = [];
+
+if toggles.gamma_correction && ~exist(dirs.corrected_CLUT_dir, 'dir')
+    error(['Corrected CLUT directory not found: ' dirs.corrected_CLUT_dir]);
+end
 
 if exist(dirs.functions_dir, 'dir')
     addpath(dirs.functions_dir);
@@ -57,7 +62,12 @@ else
     mkdir(dirs.data_dir);
 end
 
-% Verify subject directory and run number
+%% Check PTB
+
+checkPTB();
+
+%% Verify subject directory and run number
+
 subj_files = dir([dirs.subj_dir, '/*.mat']);
 subj_filenames = {subj_files.name};
 if isempty(subj_filenames)
