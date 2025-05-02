@@ -28,8 +28,8 @@ toggles.save_run_info = false;
 
 %% Set subject ID and number of runs
 
-p.subj_ID = '999';
-num_runs = 2; % default = 9
+p.subj_ID = '000';
+num_runs = 9; % default = 9
 
 %% Set directories 
 
@@ -99,6 +99,8 @@ w.white = ones(1,3) * 255;
 w.black = zeros(1,3); 
 
 %% Prepare scan
+
+t.TR = 1; % fMRI TR duration in seconds
 
 [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles);
 
