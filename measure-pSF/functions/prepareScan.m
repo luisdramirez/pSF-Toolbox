@@ -54,8 +54,8 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     % ------------------------------
 
     % +++ Timing parameters +++
-    t.TR = 1; 
-    t.blank_period_dur = 1; % default = 10 s
+    t.TR = 1; % fMRI TR duration in seconds
+    t.blank_period_dur = t.TR * 10; % default = 10 s
     t.block_dur = t.TR * p.noise_filter_count;
     t.scan_dur = (t.block_dur * p.num_blocks) + (t.blank_period_dur * (p.num_blocks + 1));
 
