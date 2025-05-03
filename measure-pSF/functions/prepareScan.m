@@ -20,11 +20,10 @@
 
 function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     
-    %% Scan parameters
-
     p.num_blocks = 6;
     
-    % +++ Stimuli parameters +++
+    %% Stimuli parameters
+
     p.aperture_radius_deg = 9; % defines the apparent stimulus size
     p.aperture_radius_px = round(p.aperture_radius_deg * w.ppd);
     p.stimulus_radius_px = round(p.aperture_radius_px * 1.25); % default = 1.1
@@ -32,28 +31,9 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     p.stimulus_contrast = 0.9; % default = 0.9
     p.noise_filter_count = 40; % default = 40
     p.noise_sample_count = 10; % default = 10
-
-    % ------------------------------
-
-    % +++ Fixation parameters +++
-    p.fixation_task_luminance = 70; % default = 70 
-
-    p.fixation_aperture_deg = 1;
-    p.fixation_aperture_px = round(p.fixation_aperture_deg * w.ppd);
-    if ~mod(p.fixation_aperture_px, 2), p.fixation_aperture_px = p.fixation_aperture_px + 1; end 
-
-    % The fixation aperture radius defines the inner annulus radius.
-    p.fixation_aperture_radius_deg = 0.32; % default = 0.32°
-    p.fixation_aperture_radius_px = round(p.fixation_aperture_radius_deg * w.ppd); 
-    if ~mod(p.fixation_aperture_radius_px, 2), p.fixation_aperture_radius_px = p.fixation_aperture_radius_px + 1; end 
-
-    p.fixation_dot_deg = 0.15; % default = 0.15°
-    p.fixation_dot_px = round(p.fixation_dot_deg * w.ppd); 
-    if ~mod(p.fixation_dot_px, 2), p.fixation_dot_px = p.fixation_dot_px - 1; end 
     
-    % ------------------------------
+    %% Timing parameters
 
-    % +++ Timing parameters +++
     t.TR = 1; % fMRI TR duration in seconds
     t.blank_period_dur = t.TR * 10; % default = 10 s
     t.block_dur = t.TR * p.noise_filter_count;
@@ -70,10 +50,27 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     t.frame_rate = 20; % Hz, default = 20
     t.frame_dur = 1/t.frame_rate;
    
-    % ------------------------------
+    %% Fixation parameters
+
+    p.fixation_task_luminance = 70; % default = 70 
+
+    p.fixation_aperture_deg = 1;
+    p.fixation_aperture_px = round(p.fixation_aperture_deg * w.ppd);
+    if ~mod(p.fixation_aperture_px, 2), p.fixation_aperture_px = p.fixation_aperture_px + 1; end 
+
+    % The fixation aperture radius defines the inner annulus radius.
+    p.fixation_aperture_radius_deg = 0.32; % default = 0.32°
+    p.fixation_aperture_radius_px = round(p.fixation_aperture_radius_deg * w.ppd); 
+    if ~mod(p.fixation_aperture_radius_px, 2), p.fixation_aperture_radius_px = p.fixation_aperture_radius_px + 1; end 
+
+    p.fixation_dot_deg = 0.15; % default = 0.15°
+    p.fixation_dot_px = round(p.fixation_dot_deg * w.ppd); 
+    if ~mod(p.fixation_dot_px, 2), p.fixation_dot_px = p.fixation_dot_px - 1; end 
 
     %% Device input
 
+    KbName('UnifyKeyNames');
+    
     p.trigger_key = KbName('5%');
     p.keypress_numbers = [KbName('1!') KbName('2@') KbName('3#') KbName('4$')];
 
@@ -97,10 +94,13 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
 
     % pSF textures
     texture_filepath = fullfile(dirs.stimuli_dir, ...
-        sprintf('bandpass_filtered_noise_%s_%s_%s.mat', ...
+        sprintf('bandpass_filtered_noise_%s_%s_%s_%s_%s_%s.mat', ...
                 strrep(sprintf('%0.2f', w.ppd), '.', ''), ...
                 strrep(sprintf('%0.6f', w.px_size), '.', ''), ...
-                strrep(sprintf('%0.2f', p.stimulus_radius_px), '.', '')));
+                strrep(sprintf('%0.2f', p.stimulus_radius_px), '.', ''), ...
+                strrep(sprintf('%0.2f', p.stimulus_contrast), '.', ''), ...
+                strrep(sprintf('%0.2f', p.noise_filter_count), '.', ''), ...
+                strrep(sprintf('%0.2f', p.noise_sample_count), '.', '')));
 
     if exist(texture_filepath, 'file') == 2
         disp('Loading textures...');
