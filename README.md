@@ -1,4 +1,4 @@
-# Population Spatial Frequency Toolbox
+# The Population Spatial Frequency Toolbox
 
 The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) approach, originally developed by [Aghajari, Vinke, & Ling 2020 (Journal of Neurophysiology)](https://doi.org/10.1152/jn.00291.2019), with accessibility in mind. 
 
