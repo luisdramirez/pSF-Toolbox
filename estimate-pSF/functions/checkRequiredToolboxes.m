@@ -1,5 +1,4 @@
-% checkRequiredToolboxes
-%   Checks for required MATLAB toolboxes.
+% checkRequiredToolboxes - Checks for required MATLAB toolboxes.
 %   If any are missing, an error is returned.
 
 function checkRequiredToolboxes(toggles)
