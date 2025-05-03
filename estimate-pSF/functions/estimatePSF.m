@@ -2,8 +2,8 @@
 %   Estimates pSFT parameters from voxel time series via fmincon()
 %
 %   Inputs:
-%       measured_BOLD - voxel time series [time x voxels]
 %       I - input time series [time x 1]
+%       measured_BOLD - voxel time series [time x voxels]
 %       HIRF - hemodynamic impulse response function [time x 1]
 %       p - structure of parameters (see example_pipeline.m)
 %       toggles - structure of toggles (see example_pipeline.m)
@@ -18,7 +18,7 @@
 %       -   estimated SSE values [1 x voxels]
 %       -   fmincon exit flags [1 x voxels]
 
-function pSFT = estimatePSF(measured_BOLD, I, HIRF, p, toggles)
+function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
 
     if toggles.disp_on, disp('Initializing estimatePSF ...'); end
 
