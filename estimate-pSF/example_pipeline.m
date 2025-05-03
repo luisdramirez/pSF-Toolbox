@@ -64,17 +64,23 @@ p.sfs = 10.^linspace(log10(p.sf_min), log10(p.sf_max), p.sf_count);
 %% Initalize pSFT model parameters
 % [mu, sigma, beta, beta_0]
 
-p.init_params = [1 1 1 0]; 
+p.initial_params = [1 1 1 0]; 
 
 p.pSFT_bounds(1,:) = [6, 4, 25, 10];
 p.pSFT_bounds(2,:) = [0.009, 0.1, -25, -10]; 
+
+p.fmincon_options = optimset('MaxFunEvals', 100000, 'MaxIter', 10000, 'display','off');
+
+%% Prepare data
+
+% prepareData();
 
 %% Load data
 
 load(fullfile(data_dir, 'sample_data.mat'));
 
 num_subjs = length(sample_data);
-num_ROIs = size(sample_data(1).measured_BOLD, 3); % assumes all subjs have the same num ROIs
+num_ROIs = length(sample_data(1).measured_BOLD);
 
 %% Initialize pSFT struct
 
@@ -99,13 +105,18 @@ HIRF = defineHRF();
 total_elapsed_time = 0;
 
 for subj = 1:num_subjs
+
+    I = sample_data(subj).I;
+    
     for roi = 1:num_ROIs
 
         if toggles.disp_on, disp(['++++ S' num2str(subj) ' V' num2str(roi) ' ++++']); end
 
         tic;    
 
-        pSFT = estimatePSF(sample_data(subj).measured_BOLD(:,:,roi), sample_data(subj).I, HIRF, p, toggles);
+        measured_BOLD = sample_data(subj).measured_BOLD{roi};
+        
+        pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles);
         all_pSFT(subj,roi) = pSFT;
 
         elapsed_time = round(toc/60,1);
