@@ -26,10 +26,10 @@ function chunk = fitVoxels(chunk, I, HIRF, p, toggles)
 
     %% Pre-allocate arrays
 
-    tmp_start_values = nan(size(p.init_params,2), num_vox);
+    tmp_start_values = nan(size(p.initial_params,2), num_vox);
     tmp_start_sse = nan(1, num_vox); 
 
-    tmp_param_est = nan(size(p.init_params,2), num_vox);
+    tmp_param_est = nan(size(p.initial_params,2), num_vox);
     tmp_sse = nan(1, num_vox);
     tmp_exitflag = nan(1, num_vox);
     tmp_r2 = nan(1, num_vox);
@@ -48,9 +48,9 @@ function chunk = fitVoxels(chunk, I, HIRF, p, toggles)
         % pSFT params: [mu, sigma, beta, beta_0]
         
         if toggles.coarse_grid_search
-            pSFT_start_vals = gridSearch(p.init_params, curr_fixed_params_vox, 'coarse', p.pSFT_bounds);
+            pSFT_start_vals = gridSearch(p.initial_params, curr_fixed_params_vox, 'coarse', p.pSFT_bounds);
         else
-            pSFT_start_vals = p.init_params;
+            pSFT_start_vals = p.initial_params;
         end
         
         if toggles.fine_grid_search
@@ -64,12 +64,7 @@ function chunk = fitVoxels(chunk, I, HIRF, p, toggles)
 
         pSFT_model = @(pSFT_free_params) calcFit(pSFT_free_params, curr_fixed_params_vox);
         
-        upper_bound = p.pSFT_bounds(1,:);
-        lower_bound = p.pSFT_bounds(2,:);
-        
-        options = optimset('MaxFunEvals', 100000, 'MaxIter', 10000, 'display','off');
-
-        [param_est, sse, exit_flag] = fmincon(pSFT_model, pSFT_start_vals, [],[],[],[], lower_bound, upper_bound, [], options);
+        [param_est, sse, exit_flag] = fmincon(pSFT_model, pSFT_start_vals, [],[],[],[], p.pSFT_bounds(2,:), p.pSFT_bounds(1,:), [], p.fmincon_options);
         
         tmp_param_est(:,vox) = param_est;
         tmp_sse(vox) = sse;
