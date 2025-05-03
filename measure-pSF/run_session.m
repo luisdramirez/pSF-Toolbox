@@ -100,8 +100,6 @@ w.black = zeros(1,3);
 
 %% Prepare scan
 
-t.TR = 1; % fMRI TR duration in seconds
-
 [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles);
 
 %% Present stimuli
@@ -116,6 +114,7 @@ for n_run = 1:num_runs
     
     if toggles.save_run_info
         save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '.mat']), 'run_info');
+        save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '_I.mat']), 'run_info.p.I');
         disp(['Run ' num2str(n_run) ' saved.']);
     end
 end
@@ -126,3 +125,5 @@ Screen('LoadNormalizedGammaTable', w.window, w.default_CLUT);
 Screen('CloseAll'); ShowCursor;
 PsychHID('KbQueueStop', p.device_number);
 PsychHID('KbQueueRelease', p.device_number);
+
+disp('Session complete.');
