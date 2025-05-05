@@ -16,9 +16,10 @@ This directory contains scripts for executing the experiment via Psychtoolbox.
 We provide an example scan session script for data acquisition (see `/measure-pSF/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user. 
 
 Critical functions include `prepareScan` and `presentStimuli`. 
+
 Users will find key stimulus and timing parameters inside `prepareScan`. For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` (or `p.aperture_radius_px`); to match the fMRI scan length, `t.TR` must match the duration of the repetition time. 
 
-`presentStimuli` will output a structure that compiles all the experiment structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`).  
+`presentStimuli` will output a structure that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`).  
 
 **Directory contents**
 -   `/stimuli`: Stimulus textures will be stored here by default.
