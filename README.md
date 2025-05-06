@@ -75,6 +75,7 @@ Parameters:
 
 ## License
 
-The Population Spatial Frequency Toolbox is released under the MIT License. See the [LICENSE](LICENSE.txt) file for details.
+The Population Spatial Frequency Toolbox is released under the GNU General Public License v3.0 or later. See the [LICENSE.txt](LICENSE.txt) file for details.
+
 
 
