@@ -73,4 +73,8 @@ Parameters:
 -   `simulate_pSF.m`: Useful for generating synthetic tuning curves.
 
 
+## License
+
+The Population Spatial Frequency Toolbox is released under the MIT License. See the [LICENSE](LICENSE.txt) file for details.
+
 
