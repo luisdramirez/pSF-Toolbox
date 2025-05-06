@@ -1,5 +1,5 @@
 % estimatePSF 
-%   Estimates pSFT parameters from voxel time series via fmincon()
+%   Estimates pSFT parameters from voxel time series via fmincon
 %
 %   Inputs:
 %       I - input time series [time x 1]
@@ -17,6 +17,7 @@
 %       -   estimated R^2 values [1 x voxels]
 %       -   estimated SSE values [1 x voxels]
 %       -   fmincon exit flags [1 x voxels]
+%       -   measured BOLD time series [time x voxels]
 
 function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
 
@@ -29,6 +30,7 @@ function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
     chunks_size = cell(1, p.num_chunks);    
 
     chunks = struct('vox_indices', chunks_size, ...
+        'measured_BOLD', chunks_size, ...
         'param_est', chunks_size, ...    
         'est_SFT', chunks_size, ...
         'est_R', chunks_size, ...
@@ -37,8 +39,7 @@ function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
         'sse', chunks_size, ...
         'start_values', chunks_size, ...
         'start_sse', chunks_size, ...
-        'exitflag', chunks_size, ...
-        'measured_BOLD', chunks_size);
+        'exitflag', chunks_size);
 
     %% Chunk time series data
 
@@ -47,8 +48,8 @@ function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
     [measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(measured_BOLD, p.num_chunks);
 
     for chunk = 1:p.num_chunks
-        chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
         chunks(chunk).vox_indices = vox_chunk_indices(chunk,:);
+        chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
     end
     
     %% Loop through chunks of voxels
@@ -59,10 +60,12 @@ function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
         parfor chunk = 1:p.num_chunks
             chunks(chunk) = fitVoxels(chunks(chunk), I, HIRF, p, toggles);
         end
+    
     else
         for chunk = 1:p.num_chunks
             chunks(chunk) = fitVoxels(chunks(chunk), I, HIRF, p, toggles);
         end
+    
     end
     
     %% Resplice chunks
