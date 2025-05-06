@@ -11,6 +11,8 @@ authors:
     given-names: "Feiyi"
   - family-names: "Wiecek"
     given-names: "Emily"
+  - family-names: "Vinke"
+    given-names: "Louis N."
   - family-names: "Ling"
     given-names: "Sam"
 repository-code: "https://github.com/luisdramirez/pSF-Toolbox"
