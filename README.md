@@ -10,7 +10,7 @@ The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) appro
 
 We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSF`) and (2) voxel-wise parameter optimization (see `/estimate-pSF`). 
  
-### `/measure-pSF`
+### `measure-pSF`
 This directory contains scripts for executing the experiment via Psychtoolbox.
 
 We provide an example scan session script for data acquisition (see `/measure-pSF/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user. 
@@ -33,7 +33,7 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
     -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
 
 
-### `/estimate-pSF`
+### `estimate-pSF`
 This directory contains scripts for estimating pSFT parameters from fMRI data.
 
 We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSF/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
