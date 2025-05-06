@@ -70,7 +70,7 @@ Parameters:
     -   `chunkTimeSeries`: Splits time series for parallel processing.
     -   `cpd2oct`: Converts bandwidth from cpd to octaves.
     -   `checkRequiredToolboxes`: Verifies that the required MATLAB Toolboxes are installed.
--   `simulate_pSF.m`: Useful for generating synthetic tuning curves.
+-   `simulate_pSF`: Useful for generating synthetic tuning curves.
 
 
 ## License
