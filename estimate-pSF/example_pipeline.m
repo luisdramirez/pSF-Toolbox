@@ -82,6 +82,10 @@ load(fullfile(data_dir, 'sample_data.mat'));
 num_subjs = length(sample_data);
 num_ROIs = length(sample_data(1).measured_BOLD);
 
+roi_names = {'V1', 'V2', 'V3'};
+
+HRF = defineHRF();
+
 %% Initialize pSFT struct
 
 struct_size = cell(num_subjs, num_ROIs);    
@@ -100,23 +104,23 @@ all_pSFT = struct('vox_indices', struct_size, ...
 
 %% Estimate pSFT
 
-HIRF = defineHRF();
-
 total_elapsed_time = 0;
 
 for subj = 1:num_subjs
+
+    if toggles.disp_on, disp(['+++ S ' num2str(subj) ' +++']); end
 
     I = sample_data(subj).I;
     
     for roi = 1:num_ROIs
 
-        if toggles.disp_on, disp(['++++ S' num2str(subj) ' V' num2str(roi) ' ++++']); end
+        if toggles.disp_on, disp(['-- ROI ' roi_names{roi} ' --']); end
 
         tic;    
 
         measured_BOLD = sample_data(subj).measured_BOLD{roi};
         
-        pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles);
+        pSFT = estimatePSF(I, measured_BOLD, HRF, p, toggles);
         all_pSFT(subj,roi) = pSFT;
 
         elapsed_time = round(toc/60,1);
