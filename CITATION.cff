@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this toolbox in your research, please cite the following."
+title: "The Population Spatial Frequency Toolbox"
+version: "1.0.0"
+date-released: 2025-XX-XX
+authors:
+  - family-names: "Ramirez"
+    given-names: "Luis D."
+    orcid: "https://orcid.org/0000-0003-4105-0496"
+  - family-names: "Wang"
+    given-names: "Feiyi"
+  - family-names: "Wiecek"
+    given-names: "Emily"
+  - family-names: "Ling"
+    given-names: "Sam"
+repository-code: "https://github.com/luisdramirez/pSF-Toolbox"
+license: "MIT"
+doi: "..."
