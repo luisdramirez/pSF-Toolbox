@@ -50,6 +50,8 @@ function run_info = presentStimuli(p, w, t, stimuli, frames)
     sf_indx = 0;
     noise_sample_indx = 0;
 
+    disp('Beginning stimulus presentation...');
+
     for n_frame = 1:frames.count
 
         if n_frame == 1
@@ -127,12 +129,17 @@ function run_info = presentStimuli(p, w, t, stimuli, frames)
         %% Update block info 
 
         if frames.update_block(n_frame)
+            disp(['Block ' num2str(n_block) ' of ' num2str(p.num_blocks) ' completed.'])
             n_block = n_block + 1;
             sf_indx = 0;
             PsychHID('KbQueueFlush', p.device_number);
         end
 
     end
+
+    disp(['Block ' num2str(p.num_blocks) ' of ' num2str(p.num_blocks) ' completed.']);
+
+    %% End of run
 
     t.run_end = GetSecs;    
     behav_data.overall_hit_rate = sum(behav_data.detection) / num_total_targets;
