@@ -10,7 +10,7 @@ The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) appro
 
 We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSFT`) and (2) voxel-wise parameter optimization (see `/estimate-pSFT`). 
  
-### `measure-pSFT`
+## measure-pSFT
 This directory contains scripts for executing the experiment via Psychtoolbox.
 
 We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user. 
@@ -33,7 +33,7 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
     -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
 
 
-### `estimate-pSFT`
+## estimate-pSFT
 This directory contains scripts for estimating pSFT parameters from fMRI data.
 
 We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
@@ -54,6 +54,7 @@ Parameters:
 **Directory contents**
 -   `example_pipeline`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
 -   `estimatePSFT`: This is the main high-level function for estimating pSFT parameters. 
+
 It takes the stimulus spatial frequency time series, measured BOLD time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSFT` containing:
     - estimated pSFT parameters (peak SF, bandwidth, BOLD amplitude, baseline)
     - estimated pSFT curves
