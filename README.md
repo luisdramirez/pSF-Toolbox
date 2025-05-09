@@ -57,7 +57,6 @@ Parameters:
 -   `estimatePSFT`: This is the main high-level function for estimating pSFT parameters. 
 
 It takes the stimulus spatial frequency time series, measured BOLD time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSFT` containing:
-
 - estimated pSFT parameters (peak SF, bandwidth, BOLD amplitude, baseline)
 - estimated pSFT curves
 - estimated neural time series
