@@ -8,12 +8,12 @@ The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) appro
 - The shape of the BOLD percent signal change time series data must have time along the first dimension and voxels along the second (i.e., time points x voxels).
 - **Strongly recommended**: The Parallel Computing Toolbox for MATLAB must be installed for parallelization.
 
-We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSF`) and (2) voxel-wise parameter optimization (see `/estimate-pSF`). 
+We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSFT`) and (2) voxel-wise parameter optimization (see `/estimate-pSFT`). 
  
-### `measure-pSF`
+### `measure-pSFT`
 This directory contains scripts for executing the experiment via Psychtoolbox.
 
-We provide an example scan session script for data acquisition (see `/measure-pSF/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user. 
+We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user. 
 
 Critical functions include `prepareScan` and `presentStimuli`. 
 
@@ -33,10 +33,10 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
     -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
 
 
-### `estimate-pSF`
+### `estimate-pSFT`
 This directory contains scripts for estimating pSFT parameters from fMRI data.
 
-We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSF/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
+We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
 
 Below are toggles and parameters that must be defined before entering `estimatePSFT.m` (see `example_pipeline.m`).
 
