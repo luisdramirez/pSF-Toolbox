@@ -1,5 +1,5 @@
 % chunkTimeSeries - Create chunks of time series data 
-%   Assumes the time series data shape is a 2D matrix with time along the columns.
+%   Assumes the time series data shape is a 2D matrix with time along the first dimension (ie time x voxels).
 %
 %   Syntax
 %       [time_series_chunks, chunk_indices] = chunkTimeSeries(time_series_data, num_chunks)
