@@ -20,10 +20,6 @@
 %       -   measured BOLD time series [time x voxels]
 
 function pSFT = estimatePSFT(I, measured_BOLD, HIRF, p, toggles)
-
-    if toggles.disp_on, disp('Initializing estimatePSFT ...'); end
-
-    addpath('functions');
       
     %% Initialize 'chunks' structure array 
         
@@ -51,6 +47,8 @@ function pSFT = estimatePSFT(I, measured_BOLD, HIRF, p, toggles)
         chunks(chunk).vox_indices = vox_chunk_indices(chunk,:);
         chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
     end
+
+    if toggles.disp_on, disp('Done!'); end
     
     %% Loop through chunks of voxels
     
@@ -67,6 +65,8 @@ function pSFT = estimatePSFT(I, measured_BOLD, HIRF, p, toggles)
         end
     
     end
+
+    if toggles.disp_on, disp('Done!'); end
     
     %% Resplice chunks
 
@@ -77,6 +77,8 @@ function pSFT = estimatePSFT(I, measured_BOLD, HIRF, p, toggles)
     for i_field = 1:length(field_names)
         pSFT.(field_names{i_field}) = cat(2, chunks.(field_names{i_field}));
     end
+
+    if toggles.disp_on, disp('Done!'); end
 
 end
 
