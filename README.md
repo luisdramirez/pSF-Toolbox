@@ -7,14 +7,14 @@ We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 t
 **Requirements**
 - Psychtoolbox-3 must be installed for stimulus presentation.
 - The Optimization Toolbox for MATLAB must be installed for parameter optimization.
-- The shape of the BOLD percent signal change time series data must have time along the first dimension and voxels along the second (i.e., time points x voxels).
+- The shape of the BOLD percent signal change time series data must have time along the first dimension and voxels along the second (i.e., time x voxels).
 - **Strongly recommended**: The Parallel Computing Toolbox for MATLAB must be installed for parallelization.
 
  
 ## measure-pSFT
 This directory contains scripts for executing the experiment via Psychtoolbox.
 
-We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user. 
+We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user.  
 
 Critical functions include `prepareScan` and `presentStimuli`. 
 
@@ -27,7 +27,7 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 -   `/data`: Experimental run info will be stored here by default.
 -   `/functions`: Contains supporting functions for stimulus generation, display, and experimental control.
     -   `checkPTB`: Verifies Psychtoolbox installation.
-    -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window for a scan.
+    -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window.
     -   `createTextures`: Creates bandpass-filtered noise textures for stimuli.
     -   `createApertures`: Creates stimulus apertures.
     -   `genFrames`: Generates the sequence of events and timing for each experiment frame.
@@ -37,7 +37,7 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 ## estimate-pSFT
 This directory contains scripts for estimating pSFT parameters from fMRI data.
 
-We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
+We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`. Note that this example pipeline assumes that each subject has the same number of regions of interest (ROIs).
 
 Below are toggles and parameters that must be defined before entering `estimatePSFT.m` (see `example_pipeline.m`).
 
@@ -69,7 +69,7 @@ It takes the stimulus spatial frequency time series, measured BOLD time series, 
     -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`, called within estimatePSFT.
     -   `logGauss`: Defines the log Gaussian function for the pSFT tuning curve.
     -   `calcFit`: Computes SSE.
-    -   `defineHRF`: Creates a canonical HRF model.
+    -   `defineHRF`: Creates a canonical HRF model based on Boynton & Heeger 1996 Journal of Neuroscience.
     -   `gridSearch`: Implements grid search for initial parameter estimates.
     -   `chunkTimeSeries`: Splits time series for parallel processing.
     -   `cpd2oct`: Converts bandwidth from cpd to octaves.
