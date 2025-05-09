@@ -1,4 +1,4 @@
-% estimatePSF 
+% estimatePSFT 
 %   Estimates pSFT parameters from voxel time series via fmincon
 %
 %   Inputs:
@@ -19,9 +19,9 @@
 %       -   fmincon exit flags [1 x voxels]
 %       -   measured BOLD time series [time x voxels]
 
-function pSFT = estimatePSF(I, measured_BOLD, HIRF, p, toggles)
+function pSFT = estimatePSFT(I, measured_BOLD, HIRF, p, toggles)
 
-    if toggles.disp_on, disp('Initializing estimatePSF ...'); end
+    if toggles.disp_on, disp('Initializing estimatePSFT ...'); end
 
     addpath('functions');
       
@@ -97,4 +97,5 @@ end
 %
 % You should have received a copy of the GNU General Public License
 % along with this program. If not, see <https://www.gnu.org/licenses/>.
+%
 % Contact luisdramirez95@gmail.com for any questions or comments.

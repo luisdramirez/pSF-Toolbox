@@ -27,9 +27,9 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 -   `/functions`: Contains supporting functions for stimulus generation, display, and experimental control.
     -   `checkPTB`: Verifies Psychtoolbox installation.
     -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window for a scan.
-    -   `createTextures`: Generates bandpass-filtered noise textures for stimuli.
+    -   `createTextures`: Creates bandpass-filtered noise textures for stimuli.
     -   `createApertures`: Creates stimulus apertures.
-    -   `genFrames`: Defines the sequence of events and timing for each experimental frame.
+    -   `genFrames`: Generates the sequence of events and timing for each experiment frame.
     -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
 
 
@@ -38,7 +38,7 @@ This directory contains scripts for estimating pSFT parameters from fMRI data.
 
 We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSF/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`.
 
-Below are toggles and parameters that must be defined before entering `estimatePSF.m` (see `example_pipeline.m`).
+Below are toggles and parameters that must be defined before entering `estimatePSFT.m` (see `example_pipeline.m`).
 
 Toggles:
 - Parallelization (true/false)
@@ -52,8 +52,8 @@ Parameters:
 
 
 **Directory contents**
--   `example_pipeline`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation parameters (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
--   `estimatePSF`: This is the main high-level function for estimating pSFT parameters. It takes the measured BOLD time series, the stimulus spatial frequency time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSFT` containing:
+-   `example_pipeline`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
+-   `estimatePSFT`: This is the main high-level function for estimating pSFT parameters. It takes the stimulus spatial frequency time series, measured BOLD time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSFT` containing:
     - estimated pSFT parameters (peak SF, bandwidth, BOLD amplitude, baseline)
     - estimated pSFT curves
     - estimated neural time series
@@ -62,7 +62,8 @@ Parameters:
     - SSE values
     - `fmincon` exit flags
 -   `/functions`: Contains supporting functions:
-    -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`.
+    -   `estimatePSFT`: Main high-level function for estimating pSFT parameters.
+    -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`, called within estimatePSFT.
     -   `logGauss`: Defines the log Gaussian function for the pSFT tuning curve.
     -   `calcFit`: Computes SSE.
     -   `defineHRF`: Creates a canonical HRF model.

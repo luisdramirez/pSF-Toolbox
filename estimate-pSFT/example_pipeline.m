@@ -120,7 +120,7 @@ for subj = 1:num_subjs
 
         measured_BOLD = sample_data(subj).measured_BOLD{roi};
         
-        pSFT = estimatePSF(I, measured_BOLD, HRF, p, toggles);
+        pSFT = estimatePSFT(I, measured_BOLD, HRF, p, toggles);
         all_pSFT(subj,roi) = pSFT;
 
         elapsed_time = round(toc/60,1);
