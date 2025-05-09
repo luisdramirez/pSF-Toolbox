@@ -619,6 +619,7 @@ Program, unless a warranty or assumption of liability accompanies a
 copy of the Program in return for a fee.
 
                      END OF TERMS AND CONDITIONS
+
             The Population Spatial Frequency Toolbox
 Copyright (C) 2025 Luis D. Ramirez, Feiyi Wang, Emily Wiecek, Louis N. Vinke, and Sam Ling
 
