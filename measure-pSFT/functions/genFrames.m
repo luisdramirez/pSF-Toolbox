@@ -1,3 +1,15 @@
+% genFrames - Generate frames for the scan
+%
+%   Syntax
+%       frames = genFrames(p, t)
+%
+%   Input Arguments
+%       p – structure containing scan parameters
+%       t – structure containing timing parameters
+%
+%   Output Arguments
+%       frames – structure containing frames
+%
 function frames = genFrames(p, t)
 
     frames.onsets = 0:t.frame_dur:t.scan_dur-t.frame_dur;
@@ -32,6 +44,8 @@ function frames = genFrames(p, t)
 
     for n_block = 1:p.num_blocks
 
+        %% General task block frames
+
         block_start_frame = n_block * blank_period_frames_count + (n_block - 1) * block_frames_count + 1;
         block_end_frame = block_start_frame + block_frames_count - 1; % n_block * blank_period_frames_count + n_block * block_frames_count;
         frame_range = block_start_frame:block_end_frame;
@@ -47,7 +61,7 @@ function frames = genFrames(p, t)
 
         %% Fixation Task
         
-        % Determine valid range for target ONSETS within this block
+        % Determine valid range for target onsets
         earliest_onset_frame = block_start_frame + delay_frames_count;
         latest_onset_frame = block_end_frame - target_frames_count + 1;
         possible_onset_frames = earliest_onset_frame:latest_onset_frame;
