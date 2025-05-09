@@ -1,21 +1,22 @@
 % createTextures - Generate stimuli for acquiring pSF
 %   Generates a set of bandpass filtered noise textures for a given image size, pixel size, and ppd.
 %
-%   Syntax
-%       textures = createTextures(radius_px, contrast, noise_sample_count, ppd, px_size, save_textures, texture_filepath)
+% Syntax
+%   [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, px_size, save_textures, texture_filepath)
 %
-%   Input Arguments
-%       radius_px – radius of the stimulus in pixels
-%       contrast – contrast of the noise
-%       noise_sample_count – number of noise samples
-%       ppd – pixels per degree
-%       px_size – size of each pixel in cm
-%       save_textures – boolean to save the textures
-%       texture_filepath – path to save the textures
+% Input Arguments
+%   radius_px – radius of the stimulus in pixels
+%   contrast – contrast of the noise
+%   noise_filter_count – number of noise filters
+%   noise_sample_count – number of noise samples
+%   ppd – pixels per degree
+%   px_size – size of each pixel in cm
+%   save_textures – boolean to save the textures
+%   texture_filepath – path to save the textures
 %
-%   Output Arguments
-%       textures – [height, width, filter_count, noise_sample] of bandpass filtered noise textures
-%       filters – structure containing filter parameters (count, min, max, width, gauss_smoothening_sd, centers, lower_bound, upper_bound, f_Nyquist, masks)
+% Output Arguments
+%   textures – [height, width, filter_count, noise_sample] of bandpass filtered noise textures
+%   filters – structure containing filter parameters (count, min, max, width, gauss_smoothening_sd, centers, lower_bound, upper_bound, f_Nyquist, masks)
 
 function [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, px_size, save_textures, texture_filepath)
     
