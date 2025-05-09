@@ -1,7 +1,7 @@
 .DS_Store
 *.png
-/estimate-pSF-amplitude
-/estimate-pSF/estimates
-estimate-pSF/data/sample_data_*
-measure-pSF/data/
-measure-pSF/stimuli/
+estimate-pSFT/data/sample_data_*
+/estimate-pSFT-amplitude
+/estimate-pSFT/estimates
+/measure-pSFT/stimuli
+/measure-pSFT/data
