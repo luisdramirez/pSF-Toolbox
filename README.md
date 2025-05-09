@@ -58,13 +58,14 @@ Parameters:
 
 It takes the stimulus spatial frequency time series, measured BOLD time series, and a hemodynamic impulse response function (HIRF) as input to return a structure `pSFT` containing:
 
-    - estimated pSFT parameters (peak SF, bandwidth, BOLD amplitude, baseline)
-    - estimated pSFT curves
-    - estimated neural time series
-    - estimated BOLD time series
-    - $R^2$ values
-    - SSE values
-    - `fmincon` exit flags
+- estimated pSFT parameters (peak SF, bandwidth, BOLD amplitude, baseline)
+- estimated pSFT curves
+- estimated neural time series
+- estimated BOLD time series
+- $R^2$ values
+- SSE values
+- `fmincon` exit flags
+
 -   `/functions`: Contains supporting functions:
     -   `estimatePSFT`: Main high-level function for estimating pSFT parameters.
     -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`, called within estimatePSFT.
