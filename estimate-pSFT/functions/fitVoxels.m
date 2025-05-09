@@ -2,11 +2,11 @@
 %   Fits pSFT parameters to each voxel
 %
 %   Input Arguments
-%       chunk – structure of chunked data (see estimatePSF.m)
+%       chunk – structure of chunked data (see estimatePSFT)
 %       I – matrix of input spatial frequency time series [time x 1]
 %       HIRF – hemodynamic impulse response function [time x 1]
-%       p – structure of parameters (see estimatePSF.m)
-%       toggles – structure of toggles (see estimatePSF.m)
+%       p – structure of parameters (see estimatePSFT)
+%       toggles – structure of toggles (see estimatePSFT)
 %
 %   Output Arguments
 %       chunk – structure with fields:
@@ -44,8 +44,7 @@ function chunk = fitVoxels(chunk, I, HIRF, p, toggles)
         
         curr_fixed_params_vox = {I, chunk.measured_BOLD(:,vox), HIRF};
         
-        %% Coarse-to-fine grid search for starting pSFT parameters
-        % pSFT params: [mu, sigma, beta, beta_0]
+        %% Grid search for starting pSFT parameters
         
         if toggles.coarse_grid_search
             pSFT_start_vals = gridSearch(p.initial_params, curr_fixed_params_vox, 'coarse', p.pSFT_bounds);
