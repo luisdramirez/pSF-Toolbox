@@ -1,9 +1,8 @@
 % createApertures
+%   Creates a stimulus and fixation apertures.
 %
-%   Creates a stimulus and fixation aperture.
-%
-%   Syntax
-%       [stimulus_aperture, fixation_aperture] = createApertures(p, w)
+% Syntax
+%   [stimulus_aperture, fixation_aperture] = createApertures(p, w)
 %
 %   Input Arguments
 %       p – structure containing scan parameters
