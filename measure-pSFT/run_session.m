@@ -23,8 +23,8 @@ p.device_string = 'Apple Internal Keyboard / Trackpad';
 
 toggles.macOS = true; % If true, will skip psychtoolbox sync test 
 toggles.gamma_correction = false;
-toggles.save_textures = false;
-toggles.save_run_info = false;
+toggles.save_textures = true;
+toggles.save_run_info = true;
 
 %% Set subject ID and number of runs
 
@@ -98,7 +98,7 @@ w.gray = 127;
 w.white = ones(1,3) * 255; 
 w.black = zeros(1,3); 
 
-%% Prepare scan
+%% Prepare scanning session
 
 [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles);
 
@@ -106,6 +106,7 @@ w.black = zeros(1,3);
 
 for n_run = 1:num_runs
 
+    disp(' ');
     disp(['Entering run ' num2str(n_run) '...']);
 
     run_info = presentStimuli(p, w, t, stimuli, frames);
@@ -114,9 +115,11 @@ for n_run = 1:num_runs
     
     if toggles.save_run_info
         save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '.mat']), 'run_info');
-        save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '_I.mat']), 'run_info.p.I');
+        I = run_info.p.I;
+        save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '_I.mat']), 'I');
         disp(['Run ' num2str(n_run) ' saved.']);
     end
+    
 end
 
 %% Restore setup and close screen
