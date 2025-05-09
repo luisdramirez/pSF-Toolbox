@@ -1,5 +1,5 @@
-% prepareScan
-%   Prepares the scan for the experiment.
+% prepareScan — Prepares experimental session.
+%   Defines parameters, device input, loads/creates textures, generates frames, opens window, and makes stimuli for drawing .
 %
 % Syntax
 %   [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
@@ -20,6 +20,8 @@
 
 function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     
+    disp('Preparing scanning session...')
+
     p.num_blocks = 6;
     
     %% Stimuli parameters
@@ -33,9 +35,10 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     p.noise_sample_count = 10; % default = 10
     
     %% Timing parameters
+    % In seconds unless otherwise specified
 
-    t.TR = 1; % fMRI TR duration in seconds
-    t.blank_period_dur = t.TR * 10; % default = 10 s
+    t.TR = 1; % fMRI TR duration 
+    t.blank_period_dur = t.TR * 10; % default = 10 
     t.block_dur = t.TR * p.noise_filter_count;
     t.scan_dur = (t.block_dur * p.num_blocks) + (t.blank_period_dur * (p.num_blocks + 1));
 
@@ -131,14 +134,12 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     HideCursor;
 
     PsychImaging('PrepareConfiguration');
-    PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
+    PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible'); % Allows for floating point precision
 
-    Screen('BlendFunction', w.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+    Screen('BlendFunction', w.window, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); % Enables alpha blending
 
     w.default_CLUT = Screen('ReadNormalizedGammaTable', w.window);
-    if toggles.gamma_correction
-        Screen('LoadCLUT', w.window, w.corrected_CLUT);
-    end
+    if toggles.gamma_correction, Screen('LoadCLUT', w.window, w.corrected_CLUT); end
 
     %% Make stimuli for drawing
 
@@ -158,6 +159,10 @@ function [p, w, t, stimuli, frames] = prepareScan(p, w, t, dirs, toggles)
     stimuli.stimulus_aperture_patch = CenterRectOnPoint([0 0 w.screen_width_px w.screen_height_px], w.centerX, w.centerY);
     stimuli.fixation_aperture_patch = CenterRectOnPoint([0 0 p.fixation_aperture_px p.fixation_aperture_px], w.centerX, w.centerY);
     stimuli.fixation_dot_patch = CenterRectOnPoint([0 0 p.fixation_dot_px p.fixation_dot_px], w.centerX, w.centerY);
+
+    %% End of preparation
+
+    disp('Scanning session prepared.')
 
 end
 
