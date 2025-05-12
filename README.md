@@ -75,7 +75,7 @@ Parameters:
     -   `chunkTimeSeries`: Splits time series for parallel processing.
     -   `cpd2oct`: Converts pSFT bandwidth from cycles per degree of visual angle to octaves.
     -   `checkRequiredToolboxes`: Verifies that the required MATLAB Toolboxes are installed.
--   `/simulation/simulate_pSFT`: For generating synthetic tuning curves.
+-   `/simulation/simulate_pSFT`: Contained space for simulating pSFT.
 
 
 ## License
