@@ -72,7 +72,7 @@ Parameters:
     -   `calcFit`: Computes SSE between the measured and estimated BOLD.
     -   `defineHRF`: Creates a canonical HRF model based on Boynton & Heeger 1996 Journal of Neuroscience.
     -   `gridSearch`: Implements grid search for initial parameter estimates.
-    -   `chunkTimeSeries`: Splits time series for parallel processing.
+    -   `chunkTimeSeries`: Splits voxel time series into chunks for parallel processing.
     -   `cpd2oct`: Converts pSFT bandwidth from cycles per degree of visual angle to octaves.
     -   `checkRequiredToolboxes`: Verifies that the required MATLAB Toolboxes are installed.
 -   `/simulation/simulate_pSFT`: Contained space for simulating pSFT.
