@@ -68,14 +68,14 @@ Parameters:
 -   `/functions`: Contains supporting functions:
     -   `estimatePSFT`: Main high-level function for estimating pSFT parameters.
     -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`, called within estimatePSFT.
-    -   `logGauss`: Defines the log Gaussian function for the pSFT tuning curve.
-    -   `calcFit`: Computes SSE.
+    -   `logGauss`: Defines the log Gaussian function used for the pSFT model.
+    -   `calcFit`: Computes SSE between the measured and estimated BOLD.
     -   `defineHRF`: Creates a canonical HRF model based on Boynton & Heeger 1996 Journal of Neuroscience.
     -   `gridSearch`: Implements grid search for initial parameter estimates.
     -   `chunkTimeSeries`: Splits time series for parallel processing.
-    -   `cpd2oct`: Converts bandwidth from cpd to octaves.
+    -   `cpd2oct`: Converts pSFT bandwidth from cycles per degree of visual angle to octaves.
     -   `checkRequiredToolboxes`: Verifies that the required MATLAB Toolboxes are installed.
--   `simulate_pSF`: Useful for generating synthetic tuning curves.
+-   `/simulation/simulate_pSFT`: For generating synthetic tuning curves.
 
 
 ## License
