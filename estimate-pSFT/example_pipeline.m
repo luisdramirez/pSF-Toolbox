@@ -133,8 +133,9 @@ if toggles.parallelization, delete(gcp); end
 
 if save_pSFT
     curr_time = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
-    save([save_dir '/all_pSFT_n' num2str(num_subjs) '_' char(curr_time) '.mat'], 'all_pSFT');
-    if toggles.disp_on, disp(['Saved all_pSFT.mat in /' save_dir]); end
+    filename = ['all_pSFT_n' num2str(num_subjs) '_' char(curr_time) '.mat'];
+    save([save_dir '/' filename], 'all_pSFT');
+    if toggles.disp_on, disp(['Saved ' filename ' in /' save_dir]); end
 end
 
 %% Plot voxel fits
