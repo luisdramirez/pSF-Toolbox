@@ -20,7 +20,8 @@ Critical functions include `prepareScan` and `presentStimuli`.
 
 Users will find key stimulus and timing parameters inside `prepareScan`. For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` (or `p.aperture_radius_px`); to match the fMRI scan length, `t.TR` must match the duration of the repetition time. 
 
-`presentStimuli` will output a structure that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`).  
+`presentStimuli` will output a structure, `run_info` that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`). While already in `run_info`, the matrix containing the SF input time series for every block is stored as a separate `.mat` file for convenience, as the time series across multiple blocks and runs should be concatenated as an input vector (i.e., time x 1) into the pSFT optimization pipeline.
+
 
 **Directory contents**
 -   `/stimuli`: Stimulus textures will be stored here by default.
@@ -37,7 +38,7 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 ## estimate-pSFT
 This directory contains scripts for estimating pSFT parameters from fMRI data.
 
-We include an example workflow for estimating pSFT from a sample dataset that contains SF input and measured BOLD time series from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline`). `sample_data` is a structure array with fields `I` and `measured_BOLD`. Note that this example pipeline assumes that each subject has the same number of regions of interest (ROIs).
+We include an example workflow for estimating pSFT from a sample dataset that contains concatenated SF input and measured BOLD time series across 9 scan runs from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline`). `sample_data` is a structure array with fields `I` and `measured_BOLD`. Note that this example pipeline assumes that each subject has the same number of regions of interest (ROIs).
 
 `estimatePSFT` is the main high-level function for estimating pSFT parameters. 
 
