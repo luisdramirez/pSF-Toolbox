@@ -2,7 +2,7 @@
 
 The pSF-Toolbox streamlines the population spatial frequency tuning (pSFT) approach, originally developed by [Aghajari, Vinke, & Ling 2020 (Journal of Neurophysiology)](https://doi.org/10.1152/jn.00291.2019), with accessibility in mind. 
 
-We provide a suite of scripts for (1) stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSFT`) and (2) voxel-wise parameter optimization (see `/estimate-pSFT`). 
+We provide a suite of scripts for **(1)** stimulus presentation via Psychtoolbox-3 to measure pSFT with fMRI (see `/measure-pSFT`) and **(2)** voxel-wise parameter optimization (see `/estimate-pSFT`). 
 
 **Requirements**
 - Psychtoolbox-3 must be installed for stimulus presentation.
