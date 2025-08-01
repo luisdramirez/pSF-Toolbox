@@ -10,6 +10,7 @@ We provide a suite of scripts for **(1)** stimulus presentation via Psychtoolbox
 - The shape of the BOLD percent signal change time series data must have time along the first dimension and voxels along the second (i.e., time x voxels).
 - **Strongly recommended**: The Parallel Computing Toolbox for MATLAB must be installed for parallelization.
 
+The repository can be cloned as is. 
  
 ## measure-pSFT
 This directory contains scripts for executing the experiment via Psychtoolbox.
