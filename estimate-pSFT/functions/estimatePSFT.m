@@ -1,15 +1,15 @@
-% estimatePSFT 
+% estimatePSFT
 %   Estimates pSFT parameters from voxel time series via fmincon
 %
 %   Inputs:
 %       I - input time series [time x 1]
 %       measured_BOLD - voxel time series [time x voxels]
-%       HIRF - hemodynamic impulse response function [time x 1]
+%       HRF - hemodynamic response function [time x voxels]
 %       p - structure of parameters (see example_pipeline.m)
 %       toggles - structure of toggles (see example_pipeline.m)
 %
 %   Outputs:
-%       pSFT - struct containing: 
+%       pSFT - struct containing:
 %       -   estimated pSFT parameters [4 x voxels]
 %       -   estimated pSFT curves [sf_count x voxels]
 %       -   estimated neural time series [time x voxels]
@@ -19,72 +19,75 @@
 %       -   fmincon exit flags [1 x voxels]
 %       -   measured BOLD time series [time x voxels]
 
-function pSFT = estimatePSFT(I, measured_BOLD, HIRF, p, toggles)
-      
-    %% Initialize 'chunks' structure array 
-        
-    chunks_size = cell(1, p.num_chunks);    
+function pSFT = estimatePSFT(I, measured_BOLD, HRF, p, toggles)
 
-    chunks = struct('vox_indices', chunks_size, ...
-        'measured_BOLD', chunks_size, ...
-        'param_est', chunks_size, ...    
-        'est_SFT', chunks_size, ...
-        'est_R', chunks_size, ...
-        'est_BOLD', chunks_size, ...
-        'r2', chunks_size, ...
-        'sse', chunks_size, ...
-        'start_values', chunks_size, ...
-        'start_sse', chunks_size, ...
-        'exitflag', chunks_size);
+%% Initialize 'chunks' structure array
 
-    %% Chunk time series data
+chunks_size = cell(1, p.num_chunks);
 
-    if toggles.disp_on, disp('Chunking time series data...'); end
+chunks = struct('vox_indices', chunks_size, ...
+    'measured_BOLD', chunks_size, ...
+    'HRF', chunks_size, ...
+    'param_est', chunks_size, ...
+    'est_SFT', chunks_size, ...
+    'est_R', chunks_size, ...
+    'est_BOLD', chunks_size, ...
+    'r2', chunks_size, ...
+    'sse', chunks_size, ...
+    'start_values', chunks_size, ...
+    'start_sse', chunks_size, ...
+    'exitflag', chunks_size);
 
-    [measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(measured_BOLD, p.num_chunks);
+%% Chunk time series data
 
+if toggles.disp_on, disp('Chunking time series data...'); end
+
+[measured_BOLD_chunks, vox_chunk_indices] = chunkTimeSeries(measured_BOLD, p.num_chunks);
+[HRF_chunks, ~] = chunkTimeSeries(HRF, p.num_chunks);
+
+for chunk = 1:p.num_chunks
+    chunks(chunk).vox_indices = vox_chunk_indices(chunk,:);
+    chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
+    chunks(chunk).HRF = HRF_chunks{chunk};
+end
+
+if toggles.disp_on, disp('Done!'); end
+
+%% Loop through chunks of voxels
+
+if toggles.disp_on, disp('Fitting voxels...'); end
+
+if toggles.parallelization
+    parfor chunk = 1:p.num_chunks
+        chunks(chunk) = fitVoxels(chunks(chunk), I, p, toggles);
+    end
+
+else
     for chunk = 1:p.num_chunks
-        chunks(chunk).vox_indices = vox_chunk_indices(chunk,:);
-        chunks(chunk).measured_BOLD = measured_BOLD_chunks{chunk};
+        chunks(chunk) = fitVoxels(chunks(chunk), I, p, toggles);
     end
-
-    if toggles.disp_on, disp('Done!'); end
-    
-    %% Loop through chunks of voxels
-    
-    if toggles.disp_on, disp('Fitting voxels...'); end
-    
-    if toggles.parallelization
-        parfor chunk = 1:p.num_chunks
-            chunks(chunk) = fitVoxels(chunks(chunk), I, HIRF, p, toggles);
-        end
-    
-    else
-        for chunk = 1:p.num_chunks
-            chunks(chunk) = fitVoxels(chunks(chunk), I, HIRF, p, toggles);
-        end
-    
-    end
-
-    if toggles.disp_on, disp('Done!'); end
-    
-    %% Resplice chunks
-
-    if toggles.disp_on, disp('Resplicing chunks...'); end
-
-    field_names = fieldnames(chunks);
-
-    for i_field = 1:length(field_names)
-        pSFT.(field_names{i_field}) = cat(2, chunks.(field_names{i_field}));
-    end
-
-    if toggles.disp_on, disp('Done!'); end
 
 end
 
-%% 
+if toggles.disp_on, disp('Done!'); end
 
-           % The Population Spatial Frequency Toolbox
+%% Resplice chunks
+
+if toggles.disp_on, disp('Resplicing chunks...'); end
+
+field_names = fieldnames(chunks);
+
+for i_field = 1:length(field_names)
+    pSFT.(field_names{i_field}) = cat(2, chunks.(field_names{i_field}));
+end
+
+if toggles.disp_on, disp('Done!'); end
+
+end
+
+%%
+
+% The Population Spatial Frequency Toolbox
 % Copyright (C) 2025 Luis D. Ramirez, Feiyi Wang, Emily Wiecek, Louis N. Vinke, and Sam Ling
 %
 % This program is free software: you can redistribute it and/or modify
