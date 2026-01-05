@@ -1,5 +1,5 @@
 % gridSearch - Perform a grid search to find the best mu and sigma for the pSFT model
-%   
+%
 %   Syntax
 %       [best_params, best_sse] = gridSearch(init_params, fixed_params, which_search, param_bounds)
 %
@@ -18,18 +18,18 @@ function [best_params, best_sse] = gridSearch(init_params, fixed_params, which_s
 %% Setup mu and sigma values to search through
 
 switch which_search
-    
+
     case 'coarse'
-        
+
         search_steps = 10;
 
-        mu_grid    = logspace(log10(param_bounds(2,1)), log10(param_bounds(1,1)), search_steps); 
-        sigma_grid = linspace(param_bounds(2,2), param_bounds(1,2), search_steps); 
-        
+        mu_grid    = logspace(log10(param_bounds(2,1)), log10(param_bounds(1,1)), search_steps);
+        sigma_grid = linspace(param_bounds(2,2), param_bounds(1,2), search_steps);
+
     case 'fine'
-        
+
         search_steps = 100;
-        
+
         if init_params(1)*1.5 > param_bounds(1,1)
             mu_grid_ub = param_bounds(1,1);
         else
@@ -41,22 +41,22 @@ switch which_search
         else
             mu_grid_lb = init_params(1)*0.5;
         end
-        
+
         if init_params(2)*1.5 > param_bounds(1,2)
             sigma_grid_ub = param_bounds(1,2);
         else
             sigma_grid_ub = init_params(2)*1.5;
         end
-           
+
         if init_params(2)*0.5 < param_bounds(2,2)
             sigma_grid_lb = param_bounds(2,2);
         else
             sigma_grid_lb = init_params(2)*0.5;
         end
-        
-        mu_grid    = logspace(log10(mu_grid_lb), log10(mu_grid_ub), search_steps); 
-        sigma_grid = linspace(sigma_grid_lb, sigma_grid_ub, search_steps); 
-        
+
+        mu_grid    = logspace(log10(mu_grid_lb), log10(mu_grid_ub), search_steps);
+        sigma_grid = linspace(sigma_grid_lb, sigma_grid_ub, search_steps);
+
 end
 
 %% Calculate sse for every combination of mu and sigma
@@ -65,9 +65,9 @@ sse_grid = nan(search_steps, search_steps);
 
 for i_mu = 1:search_steps
     for i_sig = 1:search_steps
-        
+
         pSFT_params = [mu_grid(i_mu) sigma_grid(i_sig) init_params(3:end)];
-        sse_grid(i_mu, i_sig) = calcFit(pSFT_params, fixed_params);
+        sse_grid(i_mu, i_sig) = evaluatePSFT(pSFT_params, fixed_params);
 
     end
 end
@@ -112,9 +112,9 @@ close all;
 
 end
 
-%% 
+%%
 
-           % The Population Spatial Frequency Toolbox
+% The Population Spatial Frequency Toolbox
 % Copyright (C) 2025 Luis D. Ramirez, Feiyi Wang, Emily Wiecek, Louis N. Vinke, and Sam Ling
 %
 % This program is free software: you can redistribute it and/or modify
