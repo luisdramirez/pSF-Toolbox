@@ -138,12 +138,12 @@ for n_run = p.run_num:num_runs
 
     disp(['Run ' num2str(n_run) ' complete.']);
 
-    %% Save run info and stimulus time series
+    %% Save run info and SF time series
 
     if toggles.save_run_info
         save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '.mat']), 'run_info');
 
-        I = generateStimulusTimeSeries(run_info.p, run_info.t);
+        I = generateSFTimeSeries(run_info.p, run_info.t, run_info.filters);
         save(fullfile(dirs.subj_dir, ['S' p.subj_ID '_run' num2str(n_run) '_I.mat']), 'I');
 
         disp(['Run ' num2str(n_run) ' saved.']);
