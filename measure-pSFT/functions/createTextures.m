@@ -1,8 +1,8 @@
 % createTextures - Generate stimuli for acquiring pSF
-%   Generates a set of bandpass filtered noise textures for a given image size, pixel size, and ppd.
+%   Generates a set of bandpass filtered noise textures for a given image size and ppd.
 %
 % Syntax
-%   [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, px_size, save_textures, texture_filepath)
+%   [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, save_textures, texture_filepath)
 %
 % Input Arguments
 %   radius_px – radius of the stimulus in pixels
@@ -10,90 +10,131 @@
 %   noise_filter_count – number of noise filters
 %   noise_sample_count – number of noise samples
 %   ppd – pixels per degree
-%   px_size – size of each pixel in cm
 %   save_textures – boolean to save the textures
 %   texture_filepath – path to save the textures
+%   verify_energy – boolean to verify the energy of the textures
 %
 % Output Arguments
 %   textures – [height, width, filter_count, noise_sample] of bandpass filtered noise textures
 %   filters – structure containing filter parameters (count, min, max, width, gauss_smoothening_sd, centers, lower_bound, upper_bound, f_Nyquist, masks)
 
-function [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, px_size, save_textures, texture_filepath)
-    
-    %% Bandpass filter parameters
+function [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, save_textures, texture_filepath)
 
-    sf_min = 0.5;
-    sf_max = 12;
-    width = 0.1;
-    gauss_smoothening_sd = 0.1 * ppd;
+%% Bandpass filter parameters
 
-    centers = 10.^linspace(log10(sf_min), log10(sf_max), noise_filter_count);
-    lower_bound = centers - width/2;
-    upper_bound = centers + width/2;
-    f_Nyquist = 1 / (2 * px_size);
+% Define spatial frequency range
+sf_min = 0.5; % cycles per degree (cpd) (default = 0.5)
+sf_max = 12; % cpd (default = 12)
+width = 0.1; % cpd (default = 0.1)
+gauss_smoothening_sd = 1; % pixels, Small amount of smoothing to avoid ringing but preserve bandwidth
 
-    %% Create bandpass filtered noise textures
-    
-    textures = nan(radius_px, radius_px, noise_filter_count, noise_sample_count);
-    masks = nan(radius_px, radius_px, noise_filter_count);
+% Logarithmically space the center frequencies
+centers = 10.^linspace(log10(sf_min), log10(sf_max), noise_filter_count); % cpd
 
-    for n_filter = 1:noise_filter_count
+% Define upper and lower bounds of each SF band
+lower_bound = centers - width/2; % cpd
+upper_bound = centers + width/2; % cpd
 
-        bandpass_filter = Bandpass2(radius_px, lower_bound(n_filter)/f_Nyquist, upper_bound(n_filter)/f_Nyquist);
-        bandpass_filter = imgaussfilt(bandpass_filter, gauss_smoothening_sd);
-        bandpass_filter = (bandpass_filter - min(bandpass_filter(:))) ./ (max(bandpass_filter(:)) - min(bandpass_filter(:)));
-        
-        masks(:, :, n_filter) = bandpass_filter;
-        
-        for n_noise_sample = 1:noise_sample_count
+% Calculate Nyquist frequency
+% In this case, the Nyquist frequency represents the minimum number of pixels needed for half a cycle from light to dark.
+f_Nyquist = ppd / 2; % angular
 
-            noise_texture = 2 * rand(radius_px) - 1; 
-            fft_texture = fftshift(fft2(noise_texture));
+% Calculate lower and upper bounds
+f_low = lower_bound / f_Nyquist; % Normalized frequency (0 to 1, where 1 = Nyquist)
+f_high = upper_bound / f_Nyquist;
 
-            filtered_texture = fft_texture .* bandpass_filter; 
-            filtered_texture = ifft2(ifftshift(filtered_texture));
-            filtered_texture = real(filtered_texture);
-            filtered_texture = filtered_texture - mean(filtered_texture(:));
+%% Create bandpass filtered noise textures
 
-            max_value = max(abs(filtered_texture(:)));
+% Initialize texture and mask arrays
+textures = nan(radius_px, radius_px, noise_filter_count, noise_sample_count);
+masks = nan(radius_px, radius_px, noise_filter_count);
 
-            if max_value > 0
-                filtered_texture = filtered_texture / (2 * max_value);
-            end
+% Loop through each filter (spatial frequency band)
+for n_filter = 1:noise_filter_count
 
-            filtered_texture = 127 * (1 + filtered_texture * 2 * contrast);
+    % Create 2D bandpass filter mask
+    bandpass_filter = Bandpass2(radius_px, f_low(n_filter), f_high(n_filter));
 
-            textures(:, :, n_filter, n_noise_sample) = filtered_texture;
+    % Smooth the filter to avoid ringing artifacts
+    bandpass_filter = imgaussfilt(bandpass_filter, gauss_smoothening_sd);
 
+    % Clip filter values to [0, 1] range (smoothing may cause minor overshoots)
+    bandpass_filter = max(0, min(1, bandpass_filter));
+
+    % figure, imagesc(bandpass_filter), colormap("gray"), axis square, axis off, box off, title("1: bandpass filter")
+
+    % Store the filter mask
+    masks(:, :, n_filter) = bandpass_filter;
+
+    % Generate noise samples for this frequency band
+    for n_noise_sample = 1:noise_sample_count
+
+        % Generate white noise
+        noise_texture = 2 * rand(radius_px) - 1;
+
+        % figure, imagesc(noise_texture), colormap("gray"), axis square, axis off, box off, title("2a: noise sample") 
+
+        % Convert to frequency domain
+        fft_texture = fftshift(fft2(noise_texture));
+
+        % figure, imagesc(abs(fft_texture)), colormap("gray"), axis square, axis off, box off, title("2b: fft noise")
+
+        % Apply the bandpass filter
+        bp_fft_texture = fft_texture .* bandpass_filter;
+
+        % figure, imagesc(abs(bp_fft_texture)), colormap("gray"), axis square, axis off, box off, title("3: bandpass fft noise")
+
+        % Convert back to spatial domain
+        filtered_texture = ifft2(ifftshift(bp_fft_texture));
+        filtered_texture = real(filtered_texture);
+        filtered_texture = filtered_texture - mean(filtered_texture(:)); % Remove DC component
+
+        % Normalize amplitude
+        max_value = max(abs(filtered_texture(:)));
+
+        if max_value > 0
+            filtered_texture = filtered_texture / (2 * max_value);
         end
 
-    end
+        % Apply contrast scaling and shift to mean gray level
+        filtered_texture = 127 * (1 + filtered_texture * 2 * contrast);
 
-    %% Store filters
+        % figure, imagesc(filtered_texture), colormap("gray"), axis square, axis off, box off, title("4: bandpass-filtered noise") 
 
-    filters.sf_min = sf_min;
-    filters.sf_max = sf_max;
-    filters.width = width;
-    filters.gauss_smoothening_sd = gauss_smoothening_sd;
-    filters.centers = centers;
-    filters.lower_bound = lower_bound;
-    filters.upper_bound = upper_bound;
-    filters.f_Nyquist = f_Nyquist;
-    filters.masks = masks;
+        % Store the final texture
+        textures(:, :, n_filter, n_noise_sample) = filtered_texture;
 
-    %% Save textures
-
-    if nargin > 6
-        if save_textures
-            save(texture_filepath, 'textures', 'filters'); 
-        end
     end
 
 end
 
-%% 
+%% Store filters
 
-           % The Population Spatial Frequency Toolbox
+% Package filter parameters into a structure
+filters.sf_min = sf_min;
+filters.sf_max = sf_max;
+filters.width = width;
+filters.gauss_smoothening_sd = gauss_smoothening_sd;
+filters.centers = centers;
+filters.lower_bound = lower_bound;
+filters.upper_bound = upper_bound;
+filters.f_Nyquist = f_Nyquist;
+filters.masks = masks;
+
+%% Save textures
+
+% Save the generated textures and filter info to a file if requested
+if nargin > 6
+    if save_textures
+        save(texture_filepath, 'textures', 'filters');
+    end
+end
+
+end
+
+%%
+
+% The Population Spatial Frequency Toolbox
 % Copyright (C) 2025 Luis D. Ramirez, Feiyi Wang, Emily Wiecek, Louis N. Vinke, and Sam Ling
 %
 % This program is free software: you can redistribute it and/or modify
