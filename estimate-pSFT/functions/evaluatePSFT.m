@@ -1,49 +1,47 @@
-% calcFit - Calculate goodness of fit of pSF parameters
-%   Calculates the sum of squares error (SSE) between the measured BOLD and the estimated BOLD.
+% evaluatePSFT - Evaluate goodness of fit of pSFT parameters
+%   Evaluates the sum of squares error (SSE) between the measured and estimated BOLD.
 %   1. Neural response, R, is generated from logGauss()
-%   2. R is convolved with HIRF to generate BOLD time series
+%   2. R is convolved with the HRF to generate BOLD time series
 %   3. Generated BOLD is converted to percent signal change [ ( y/mean(y) ) - 1 ]
-%   4. Generated BOLD is compared to measured BOLD
+%   4. Generated BOLD is then compared to measured BOLD
 %
 %   Syntax
-%       sse = calcFit(free_params, fixed_params)
+%       sse = evaluatePSFT(free_params, fixed_params)
 %
 %   Input Arguments
 %       free_params – [mu, sigma, beta, beta_0]
-%       fixed_params – {I, measured_BOLD, HIRF}
+%       fixed_params – {I, measured_BOLD, HRF}
 %
 %   Output Arguments
 %       sse – sum of squares error
 
-function sse = calcFit(free_params, fixed_params)
+function sse = evaluatePSFT(free_params, fixed_params)
 
-    %% Generate neural response
-    
-    I = fixed_params{1};
+%% Generate neural response
 
-    R = logGauss(free_params, I);
-    R(isnan(R)) = 0; 
+I = fixed_params{1};
 
-    %% Convolve neural response w/ assumed HIRF
+R = logGauss(free_params, I);
+R(isnan(R)) = 0;
 
-    HIRF = fixed_params{3};
-    beta = free_params(3);
-    beta_0 = free_params(4);
+%% Generate BOLD response
 
-    est_BOLD = conv(R, HIRF);
-    est_BOLD = est_BOLD(1:length(I)); % Crop off excess values that occur with convolution.
-    est_BOLD = beta .* ( ( est_BOLD./mean(est_BOLD) ) - 1 ) + beta_0; % Convert BOLD response to percent signal change
+HRF = fixed_params{3};
+beta = free_params(3);
+beta_0 = free_params(4);
 
-    %% Get goodness of fit 
+est_BOLD = generateBOLD(R, HRF, beta, beta_0);
 
-    measured_BOLD = fixed_params{2};
-    sse = sum( (measured_BOLD - est_BOLD).^2 ); 
+%% Get goodness of fit
+
+measured_BOLD = fixed_params{2};
+sse = SSE(measured_BOLD, est_BOLD);
 
 end
 
-%% 
+%%
 
-           % The Population Spatial Frequency Toolbox
+% The Population Spatial Frequency Toolbox
 % Copyright (C) 2025 Luis D. Ramirez, Feiyi Wang, Emily Wiecek, Louis N. Vinke, and Sam Ling
 %
 % This program is free software: you can redistribute it and/or modify
