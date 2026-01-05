@@ -34,6 +34,8 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
     -   `createApertures`: Creates stimulus apertures.
     -   `genFrames`: Generates the sequence of events and timing for each experiment frame.
     -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
+    -   `generateSFTimeSeries`: Generates a vectorized SF input time series.
+    -   `stimulusParams`: Defines stimulus parameters (aperture radius, contrast, noise filter count, noise sample count).
 
 
 ## estimate-pSFT
@@ -64,20 +66,29 @@ Parameters:
 - Initial pSFT parameters (`p.init_params`)
 - pSFT parameter bounds (`p.pSFT_bounds`)
 
-
 **Directory contents**
--   `example_pipeline`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition) and visualizing results.
+-   `example_pipeline`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition), visualizing results, and saving results. Results are saved under `/estimates/` with the file format `all_pSFT_n_yyyy-MM-dd_HH-mm-ss.mat` that contains the subject x ROI struct array `all_pSFT`.
 -   `/functions`: Contains supporting functions:
     -   `estimatePSFT`: Main high-level function for estimating pSFT parameters.
     -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`, called within estimatePSFT.
     -   `logGauss`: Defines the log Gaussian function used for the pSFT model.
-    -   `calcFit`: Computes SSE between the measured and estimated BOLD.
+    -   `evaluatePSFT`: Evaluates goodness of fit (SSE) between measured and estimated BOLD.
+    -   `generateBOLD`: Generates BOLD response from neural response by convolving with HRF and applying amplitude and baseline scaling.
     -   `defineHRF`: Creates a canonical HRF model based on Boynton & Heeger 1996 Journal of Neuroscience.
     -   `gridSearch`: Implements grid search for initial parameter estimates.
     -   `chunkTimeSeries`: Splits voxel time series into chunks for parallel processing.
     -   `cpd2oct`: Converts pSFT bandwidth from cycles per degree of visual angle to octaves.
     -   `checkRequiredToolboxes`: Verifies that the required MATLAB Toolboxes are installed.
--   `/simulation/simulate_pSFT`: Contained space for simulating pSFT.
+    -   `R2`: Calculates coefficient of determination (R²) between measured and estimated time series.
+    -   `SSE`: Calculates sum of squared errors between measured and estimated time series.
+    -   `plotSettings`: Returns a structure of standardized plot settings (fonts, colors, sizes) for visualization.
+-   `/validate-pSFT`: Contains validation scripts for testing the pSFT estimation pipeline.
+    -   `simulate_pSFT`: Simulates pSFT curves and demonstrates how changes in peak SF (μ) and bandwidth (σ) affect the tuning function.
+    -   `validate_pSFT`: Validates the pSFT estimation pipeline by simulating stimulus and BOLD time series from pre-defined pSFT parameters, then estimating parameters and comparing estimates to ground truth. Results are saved under `/validate-pSFT/estimates/` and `/validate-pSFT/figures/`.
+
+### validate-pSFT
+
+This subdirectory contains scripts for validating and simulating pSFT. `simulate_pSFT` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. `validate_pSFT` performs a complete validation of the estimation pipeline by generating synthetic data with known pSFT parameters, running the estimation procedure, and comparing the estimated parameters to the ground truth values. This validation workflow helps ensure the accuracy and reliability of the pSFT estimation method.
 
 
 ## License
