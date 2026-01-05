@@ -25,9 +25,9 @@ escape_key = KbName('ESCAPE');
 
 %% Generate SF presentation sequence
 
-p.I = nan(p.noise_filter_count, p.num_blocks);
+p.I_idx = nan(p.noise_filter_count, p.num_blocks);
 for n_block = 1:p.num_blocks
-    p.I(:,n_block) = datasample(1:p.noise_filter_count, p.noise_filter_count, 'Replace', false);
+    p.I_idx(:,n_block) = datasample(1:p.noise_filter_count, p.noise_filter_count, 'Replace', false);
 end
 
 %% Wait for trigger
@@ -87,7 +87,7 @@ for n_frame = 1:frames.count
 
     if frames.block(n_frame)
 
-        Screen('DrawTexture', w.window, stimuli.textures_made(p.I(sf_indx, n_block), noise_sample_indx), [], stimuli.stimuli_patch);
+        Screen('DrawTexture', w.window, stimuli.textures_made(p.I_idx(sf_indx, n_block), noise_sample_indx), [], stimuli.stimuli_patch);
         Screen('DrawTexture', w.window, stimuli.stimulus_aperture_made, [], stimuli.stimulus_aperture_patch);
         Screen('DrawTexture', w.window, stimuli.fixation_aperture_made, [], stimuli.fixation_aperture_patch);
         Screen('FillOval', w.window, fixation_color, stimuli.fixation_dot_patch);
