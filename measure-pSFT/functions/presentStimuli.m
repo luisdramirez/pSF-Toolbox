@@ -14,150 +14,169 @@
 %   frames – structure containing frame parameters
 
 % Output Arguments
-%   run_info – structure containing p, w, t, frames, behav_data
+%   run_info – structure containing p, w, t, frames, behav_data, filters, and aborted flag
 
 function run_info = presentStimuli(p, w, t, stimuli, frames)
-        
-    %% Generate presentation sequences
 
-    p.I = nan(p.noise_filter_count, p.num_blocks);
-    for n_block = 1:p.num_blocks
-        p.I(:,n_block) = datasample(1:p.noise_filter_count, p.noise_filter_count, 'Replace', false); 
+%% Initialize abort flag and escape key
+
+aborted = false;
+escape_key = KbName('ESCAPE');
+
+%% Generate SF presentation sequence
+
+p.I = nan(p.noise_filter_count, p.num_blocks);
+for n_block = 1:p.num_blocks
+    p.I(:,n_block) = datasample(1:p.noise_filter_count, p.noise_filter_count, 'Replace', false);
+end
+
+%% Wait for trigger
+
+DrawFormattedText(w.window, '~', w.ppd, w.ppd, w.white, w.gray);
+Screen('Flip', w.window);
+
+disp('Waiting for trigger...')
+KbTriggerWait(p.trigger_key, p.device_number);
+t.trigger_time_stamp = GetSecs;
+disp('Trigger detected!')
+
+PsychHID('KbQueueCreate', p.device_number);
+PsychHID('KbQueueStart', p.device_number);
+
+%% Initialize behavioral data structure
+
+num_total_targets = max(frames.target_onset_indices);
+behav_data.detection = false(1, num_total_targets);
+behav_data.response_time = nan(1, num_total_targets);  % RT relative to target onset
+
+%% Stimulus presentation
+
+n_block = 1;
+sf_indx = 0;
+noise_sample_indx = 0;
+
+disp('Beginning stimulus presentation...');
+
+for n_frame = 1:frames.count
+
+    if n_frame == 1
+        frames.flip_times = frames.onsets + GetSecs;
+        t.run_start = frames.flip_times(1);
     end
 
-    %% Wait for trigger 
+    %% Update noise SF
 
-    DrawFormattedText(w.window, '~', w.ppd, w.ppd, w.white, w.gray);
-    Screen('Flip', w.window);
+    if frames.update_noise_sf(n_frame) && sf_indx < p.noise_filter_count
+        sf_indx = sf_indx + 1;
+        noise_sample_indx = 0;
+    end
 
-    disp('Waiting for trigger...')
-    KbTriggerWait(p.trigger_key, p.device_number);
-    t.trigger_time_stamp = GetSecs;
-    disp('Trigger detected!')
+    if frames.update_noise_sample(n_frame) && noise_sample_indx < p.noise_sample_count
+        noise_sample_indx = noise_sample_indx + 1;
+    end
 
-    PsychHID('KbQueueCreate', p.device_number);
-    PsychHID('KbQueueStart', p.device_number);
+    %% Update fixation dot
 
-    %% Initialize behavioral data structure
+    if frames.target_on(n_frame)
+        fixation_color = p.fixation_task_luminance;
+    else
+        fixation_color = w.black;
+    end
 
-    num_total_targets = max(frames.target_onset_indices);
-    behav_data.detection = false(1, num_total_targets);       
-    behav_data.response_time = nan(1, num_total_targets);  % RT relative to target onset
+    %% Draw stimuli
 
-    %% Stimulus presentation
+    if frames.block(n_frame)
 
-    n_block = 1;
-    sf_indx = 0;
-    noise_sample_indx = 0;
+        Screen('DrawTexture', w.window, stimuli.textures_made(p.I(sf_indx, n_block), noise_sample_indx), [], stimuli.stimuli_patch);
+        Screen('DrawTexture', w.window, stimuli.stimulus_aperture_made, [], stimuli.stimulus_aperture_patch);
+        Screen('DrawTexture', w.window, stimuli.fixation_aperture_made, [], stimuli.fixation_aperture_patch);
+        Screen('FillOval', w.window, fixation_color, stimuli.fixation_dot_patch);
 
-    disp('Beginning stimulus presentation...');
+    else
 
-    for n_frame = 1:frames.count
+        Screen('FillOval', w.window, w.white, stimuli.fixation_dot_patch);
 
-        if n_frame == 1
-            frames.flip_times = frames.onsets + GetSecs;
-            t.run_start = frames.flip_times(1);
-        end
+    end
 
-        %% Update noise SF
+    [frames.VBLTimestamp(n_frame), ...
+        frames.StimulusOnsetTime(n_frame), ...
+        frames.FlipTimestamp(n_frame), ...
+        frames.Missed(n_frame)] = ...
+        Screen('Flip', w.window, frames.flip_times(n_frame));
 
-        if frames.update_noise_sf(n_frame) && sf_indx < p.noise_filter_count
-            sf_indx = sf_indx + 1;
-            noise_sample_indx = 0;
-        end
+    %% Check response
 
-        if frames.update_noise_sample(n_frame) && noise_sample_indx < p.noise_sample_count
-            noise_sample_indx = noise_sample_indx + 1;
-        end
+    [key_pressed, first_press] = PsychHID('KbQueueCheck', p.device_number);
+    which_keys = find(first_press);
 
-        %% Update fixation dot
+    % Check for escape key to abort
+    if key_pressed && ismember(escape_key, which_keys)
+        aborted = true;
+        disp('Escape key pressed. Aborting run...');
+        break;
+    end
 
-        if frames.target_on(n_frame)
-            fixation_color = p.fixation_task_luminance;
-        else
-            fixation_color = w.black;
-        end
+    if key_pressed && ~isempty(intersect(which_keys, p.keypress_numbers))
 
-        %% Draw stimuli
-        
-        if frames.block(n_frame)
+        % Check if this frame is within *any* response window
+        if frames.response_window(n_frame) == 1
+            % Get the index of the target this window belongs to (handles overlaps)
+            current_target_index = frames.target_response_map(n_frame);
 
-            Screen('DrawTexture', w.window, stimuli.pSF_textures_made(p.I(sf_indx, n_block), noise_sample_indx), [], stimuli.pSF_stimuli_patch);
-            Screen('DrawTexture', w.window, stimuli.stimulus_aperture_made, [], stimuli.stimulus_aperture_patch);
-            Screen('DrawTexture', w.window, stimuli.fixation_aperture_made, [], stimuli.fixation_aperture_patch);
-            Screen('FillOval', w.window, fixation_color, stimuli.fixation_dot_patch);
-       
-        else
-            
-            Screen('FillOval', w.window, w.white, stimuli.fixation_dot_patch);
-        
-        end
+            % Check if the pressed key is a valid response key
+            if current_target_index > 0
 
-        [frames.VBLTimestamp(n_frame), ...
-            frames.StimulusOnsetTime(n_frame), ...
-            frames.FlipTimestamp(n_frame), ...
-            frames.Missed(n_frame)] = ...
-            Screen('Flip', w.window, frames.flip_times(n_frame));
+                % Find the onset frame for this target to calculate RT
+                % (Could pre-calculate this, but finding it here is okay too)
+                target_onset_frame_for_rt = find(frames.target_onset_indices == current_target_index, 1);
 
-        %% Check response
-
-        [key_pressed, first_press] = PsychHID('KbQueueCheck', p.device_number);
-        which_keys = find(first_press);
-        
-        if key_pressed && ~isempty(intersect(which_keys, p.keypress_numbers))
-
-            % Check if this frame is within *any* response window
-            if frames.response_window(n_frame) == 1
-                % Get the index of the target this window belongs to (handles overlaps)
-                current_target_index = frames.target_response_map(n_frame);
-
-                % Check if the pressed key is a valid response key
-                if current_target_index > 0
-                    
-                    % Find the onset frame for this target to calculate RT
-                    % (Could pre-calculate this, but finding it here is okay too)
-                    target_onset_frame_for_rt = find(frames.target_onset_indices == current_target_index, 1);
-                    
-                    if ~isempty(target_onset_frame_for_rt)
-                        behav_data.detection(current_target_index) = true;
-                        behav_data.response_time(current_target_index) = GetSecs - frames.StimulusOnsetTime(target_onset_frame_for_rt);
-                    end
+                if ~isempty(target_onset_frame_for_rt)
+                    behav_data.detection(current_target_index) = true;
+                    behav_data.response_time(current_target_index) = GetSecs - frames.StimulusOnsetTime(target_onset_frame_for_rt);
                 end
             end
         end
-
-        %% Update block info 
-
-        if frames.update_block(n_frame)
-            disp(['Block ' num2str(n_block) ' of ' num2str(p.num_blocks) ' completed.'])
-            n_block = n_block + 1;
-            sf_indx = 0;
-            PsychHID('KbQueueFlush', p.device_number);
-        end
-
     end
 
-    disp(['Block ' num2str(p.num_blocks) ' of ' num2str(p.num_blocks) ' completed.']);
+    %% Update block info
 
-    %% End of run
-
-    t.run_end = GetSecs;    
-    behav_data.overall_hit_rate = sum(behav_data.detection) / num_total_targets;
-    disp(['Hit rate: ' num2str(round(100*behav_data.overall_hit_rate)) '%']);
-
-    %% Compile structures 
-        
-    run_info.p = p;
-    run_info.t = t;
-    run_info.w = w;
-    run_info.frames = frames;
-    run_info.behav_data = behav_data;
+    if frames.update_block(n_frame)
+        disp(['Block ' num2str(n_block) ' of ' num2str(p.num_blocks) ' completed.'])
+        n_block = n_block + 1;
+        sf_indx = 0;
+        PsychHID('KbQueueFlush', p.device_number);
+    end
 
 end
 
-%% 
+if ~aborted
+    disp(['Block ' num2str(p.num_blocks) ' of ' num2str(p.num_blocks) ' completed.']);
+end
 
-           % The Population Spatial Frequency Toolbox
+%% End of run
+
+t.run_end = GetSecs;
+
+if ~aborted
+    behav_data.overall_hit_rate = sum(behav_data.detection) / num_total_targets;
+    disp(['Hit rate: ' num2str(round(100*behav_data.overall_hit_rate)) '%']);
+end
+
+%% Compile structures
+
+run_info.p = p;
+run_info.t = t;
+run_info.w = w;
+run_info.frames = frames;
+run_info.behav_data = behav_data;
+run_info.aborted = aborted;
+run_info.filters = stimuli.filters;
+
+end
+
+%%
+
+% The Population Spatial Frequency Toolbox
 % Copyright (C) 2025 Luis D. Ramirez, Feiyi Wang, Emily Wiecek, Louis N. Vinke, and Sam Ling
 %
 % This program is free software: you can redistribute it and/or modify
