@@ -328,15 +328,32 @@ for subj = 1:p.num_subjs
         est_mu = est_params(1, :);
         est_sigma = est_params(2, :);
 
+        % Compute bandwidth in octaves for ground truth and estimated pSFT curves
+        num_voxels = size(simulated_data(subj, roi).SFT, 2);
+        gt_bandwidth_oct = nan(1, num_voxels);
+        est_bandwidth_oct = nan(1, num_voxels);
+
+        for vox = 1:num_voxels
+            % Ground truth bandwidth in octaves
+            [gt_bandwidth_oct(vox), ~] = cpd2oct(simulated_data(subj, roi).SFT(:, vox), p.sfs);
+
+            % Estimated bandwidth in octaves
+            [est_bandwidth_oct(vox), ~] = cpd2oct(all_pSFT(subj, roi).est_SFT(:, vox), p.sfs);
+        end
+
         % Compute RMSE for mu
         rmse_mu = sqrt(mean((gt_mu - est_mu).^2));
 
         % Compute RMSE for sigma
         rmse_sigma = sqrt(mean((gt_sigma - est_sigma).^2));
 
+        % Compute RMSE for bandwidth in octaves
+        rmse_bandwidth_oct = sqrt(mean((gt_bandwidth_oct - est_bandwidth_oct).^2));
+
         % Compute correlation between ground truth and estimates
         corr_mu = corr(gt_mu', est_mu');
         corr_sigma = corr(gt_sigma', est_sigma');
+        corr_bandwidth_oct = corr(gt_bandwidth_oct', est_bandwidth_oct');
 
         % Mean R^2 across voxels
         mean_r2 = mean(all_pSFT(subj, roi).r2);
@@ -344,18 +361,22 @@ for subj = 1:p.num_subjs
         % Store metrics
         validation_metrics(subj, roi).rmse_mu = rmse_mu;
         validation_metrics(subj, roi).rmse_sigma = rmse_sigma;
+        validation_metrics(subj, roi).rmse_bandwidth_oct = rmse_bandwidth_oct;
         validation_metrics(subj, roi).corr_mu = corr_mu;
         validation_metrics(subj, roi).corr_sigma = corr_sigma;
+        validation_metrics(subj, roi).corr_bandwidth_oct = corr_bandwidth_oct;
         validation_metrics(subj, roi).mean_r2 = mean_r2;
 
         % Display metrics
         if toggles.disp_on
             disp(['S' num2str(subj) ', ' roi_names{roi} ':']);
-            disp(['  RMSE (mu):    ' num2str(round(rmse_mu, 4))]);
-            disp(['  RMSE (sigma): ' num2str(round(rmse_sigma, 4))]);
-            disp(['  Corr (mu):    ' num2str(round(corr_mu, 4))]);
-            disp(['  Corr (sigma): ' num2str(round(corr_sigma, 4))]);
-            disp(['  Mean R^2:     ' num2str(round(mean_r2, 4))]);
+            disp(['  RMSE (mu):           ' num2str(round(rmse_mu, 4))]);
+            disp(['  RMSE (sigma):        ' num2str(round(rmse_sigma, 4))]);
+            disp(['  RMSE (bandwidth oct): ' num2str(round(rmse_bandwidth_oct, 4))]);
+            disp(['  Corr (mu):           ' num2str(round(corr_mu, 4))]);
+            disp(['  Corr (sigma):        ' num2str(round(corr_sigma, 4))]);
+            disp(['  Corr (bandwidth oct): ' num2str(round(corr_bandwidth_oct, 4))]);
+            disp(['  Mean R^2:            ' num2str(round(mean_r2, 4))]);
             disp(' ');
         end
 
@@ -473,6 +494,8 @@ if make_voxel_plots
     all_est_mu = [];
     all_gt_sigma = [];
     all_est_sigma = [];
+    all_gt_bandwidth_oct = [];
+    all_est_bandwidth_oct = [];
 
     for subj = 1:p.num_subjs
         for roi = 1:p.num_ROIs
@@ -480,6 +503,22 @@ if make_voxel_plots
             all_est_mu = [all_est_mu, all_pSFT(subj, roi).param_est(1, :)];
             all_gt_sigma = [all_gt_sigma, simulated_data(subj, roi).params(2, :)];
             all_est_sigma = [all_est_sigma, all_pSFT(subj, roi).param_est(2, :)];
+
+            % Calculate bandwidth in octaves for ground truth and estimated pSFT curves
+            num_voxels = size(simulated_data(subj, roi).SFT, 2);
+            gt_bandwidth_oct_roi = nan(1, num_voxels);
+            est_bandwidth_oct_roi = nan(1, num_voxels);
+
+            for vox = 1:num_voxels
+                % Ground truth bandwidth in octaves
+                [gt_bandwidth_oct_roi(vox), ~] = cpd2oct(simulated_data(subj, roi).SFT(:, vox), p.sfs);
+
+                % Estimated bandwidth in octaves
+                [est_bandwidth_oct_roi(vox), ~] = cpd2oct(all_pSFT(subj, roi).est_SFT(:, vox), p.sfs);
+            end
+
+            all_gt_bandwidth_oct = [all_gt_bandwidth_oct, gt_bandwidth_oct_roi];
+            all_est_bandwidth_oct = [all_est_bandwidth_oct, est_bandwidth_oct_roi];
         end
     end
 
@@ -487,7 +526,7 @@ if make_voxel_plots
     num_total_voxels = length(all_gt_mu);
 
     % Subplot 1: pSFT peak
-    subplot(1, 2, 1);
+    subplot(1, 3, 1);
     scatter(all_gt_mu, all_est_mu, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
     hold on;
     max_mu = max([all_gt_mu, all_est_mu]);
@@ -503,7 +542,7 @@ if make_voxel_plots
     hold off;
 
     % Subplot 2: pSFT linear bandwidth
-    subplot(1, 2, 2);
+    subplot(1, 3, 2);
     scatter(all_gt_sigma, all_est_sigma, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
     hold on;
     max_sigma = max([all_gt_sigma, all_est_sigma]);
@@ -514,6 +553,22 @@ if make_voxel_plots
     ylabel('Estimated \sigma (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
     ylim([0 max_sigma]); xlim([0 max_sigma]);
     title(['r = ' num2str(round(corr(all_gt_sigma', all_est_sigma'), 3)) ', n = ' num2str(num_total_voxels)]);
+    set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+    axis square; box off;
+    hold off;
+
+    % Subplot 3: pSFT bandwidth in octaves
+    subplot(1, 3, 3);
+    scatter(all_gt_bandwidth_oct, all_est_bandwidth_oct, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
+    hold on;
+    max_bandwidth_oct = max([all_gt_bandwidth_oct, all_est_bandwidth_oct]);
+    plot([0 max_bandwidth_oct], [0 max_bandwidth_oct], 'k--', 'LineWidth', 1);
+
+    % Format figure
+    xlabel('Ground Truth Bandwidth (octaves)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    ylabel('Estimated Bandwidth (octaves)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    ylim([0 max_bandwidth_oct]); xlim([0 max_bandwidth_oct]);
+    title(['r = ' num2str(round(corr(all_gt_bandwidth_oct', all_est_bandwidth_oct'), 3)) ', n = ' num2str(num_total_voxels)]);
     set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
     axis square; box off;
     hold off;
