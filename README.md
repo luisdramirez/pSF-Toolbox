@@ -10,38 +10,42 @@ We provide a suite of scripts for **(1)** stimulus presentation via Psychtoolbox
 - The shape of the BOLD percent signal change time series data must have time along the first dimension and voxels along the second (i.e., time x voxels).
 - **Strongly recommended**: The Parallel Computing Toolbox for MATLAB must be installed for parallelization.
 
-The repository can be cloned as is. 
+The repository can be cloned as is.
+
+**Citation**: If you use this toolbox in your research, please cite using the information provided in `CITATION.cff`. 
  
 ## measure-pSFT
 This directory contains scripts for executing the experiment via Psychtoolbox.
 
-We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user.  
+We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user.  
 
-Critical functions include `prepareScan` and `presentStimuli`. 
+Critical functions include `prepareScan()` and `presentStimuli()`. 
 
 Users will find key stimulus and timing parameters inside `prepareScan`. For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` (or `p.aperture_radius_px`); to match the fMRI scan length, `t.TR` must match the duration of the repetition time. 
 
-`presentStimuli` will output a structure, `run_info` that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`). While already in `run_info`, the matrix containing the SF input time series for every block is stored as a separate `.mat` file for convenience, as the time series across multiple blocks and runs should be concatenated as an input vector (i.e., time x 1) into the pSFT optimization pipeline.
+`presentStimuli()` will output a structure, `run_info` that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`). While already in `run_info`, the matrix containing the SF input time series for every block is stored as a separate `.mat` file for convenience, as the time series across multiple blocks and runs should be concatenated as an input vector (i.e., time x 1) into the pSFT optimization pipeline (see `generateSFTimeSeries()`).
 
 
 **Directory contents**
--   `/stimuli`: Stimulus textures will be stored here by default.
+-   `run_session.m`: Example scan session script for data acquisition
 -   `/data`: Experimental run info will be stored here by default.
+-   `/stimuli`: Stimulus textures will be stored here by default.
+    - `verify_stimuli.m`: Analyzes spectral energy of stimuli. Can generate and save experimental stimuli as well. 
 -   `/functions`: Contains supporting functions for stimulus generation, display, and experimental control.
-    -   `checkPTB`: Verifies Psychtoolbox installation.
-    -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window.
-    -   `createTextures`: Creates bandpass-filtered noise textures for stimuli.
-    -   `createApertures`: Creates stimulus apertures.
-    -   `genFrames`: Generates the sequence of events and timing for each experiment frame.
-    -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
-    -   `generateSFTimeSeries`: Generates a vectorized SF input time series.
-    -   `stimulusParams`: Defines stimulus parameters (aperture radius, contrast, noise filter count, noise sample count).
+    -   `checkPTB()`: Verifies Psychtoolbox installation.
+    -   `prepareScan()`: Initializes parameters, stimuli, timing, and Psychtoolbox window.
+    -   `createTextures()`: Creates bandpass-filtered noise textures for stimuli.
+    -   `createApertures()`: Creates stimulus apertures.
+    -   `genFrames()`: Generates the sequence of events and timing for each experiment frame.
+    -   `presentStimuli()`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
+    -   `generateSFTimeSeries()`: Generates a vectorized SF input time series.
+    -   `stimulusParams()`: Defines stimulus parameters (aperture radius, contrast, noise filter count, noise sample count).
 
 
 ## estimate-pSFT
 This directory contains scripts for estimating pSFT parameters from fMRI data.
 
-We include an example workflow for estimating pSFT from a sample dataset that contains concatenated SF input and measured BOLD time series across 9 scan runs from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline`). `sample_data` is a structure array with fields `I` and `measured_BOLD`. Note that this example pipeline assumes that each subject has the same number of regions of interest (ROIs).
+We include an example workflow for estimating pSFT from a sample dataset that contains concatenated SF input and measured BOLD time series across 9 scan runs from two subjects — 100 voxels in V1, V2, and V3 (see `/estimate-pSFT/example_pipeline.m`). `sample_data` is a structure array with fields `I` and `measured_BOLD`. Note that this example pipeline assumes that each subject has the same number of regions of interest (ROIs).
 
 `estimatePSFT` is the main high-level function for estimating pSFT parameters. 
 
@@ -67,7 +71,7 @@ Parameters:
 - pSFT parameter bounds (`p.pSFT_bounds`)
 
 **Directory contents**
--   `example_pipeline`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition), visualizing results, and saving results. Results are saved under `/estimates/` with the file format `all_pSFT_n_yyyy-MM-dd_HH-mm-ss.mat` that contains the subject x ROI struct array `all_pSFT`.
+-   `example_pipeline.m`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition), visualizing results, and saving results. Results are saved under `/estimates/` with the file format `all_pSFT_n_yyyy-MM-dd_HH-mm-ss.mat` that contains the subject x ROI struct array `all_pSFT`.
 -   `/functions`: Contains supporting functions:
     -   `estimatePSFT`: Main high-level function for estimating pSFT parameters.
     -   `fitVoxels`: Performs voxel-wise parameter estimation using `fmincon`, called within estimatePSFT.
@@ -83,12 +87,12 @@ Parameters:
     -   `SSE`: Calculates sum of squared errors between measured and estimated time series.
     -   `plotSettings`: Returns a structure of standardized plot settings (fonts, colors, sizes) for visualization.
 -   `/validate-pSFT`: Contains validation scripts for testing the pSFT estimation pipeline.
-    -   `simulate_pSFT`: Simulates pSFT curves and demonstrates how changes in peak SF (μ) and bandwidth (σ) affect the tuning function.
-    -   `validate_pSFT`: Validates the pSFT estimation pipeline by simulating stimulus and BOLD time series from pre-defined pSFT parameters, then estimating parameters and comparing estimates to ground truth. Results are saved under `/validate-pSFT/estimates/` and `/validate-pSFT/figures/`.
+    -   `simulate_pSFT.m`: Simulates pSFT curves and demonstrates how changes in peak SF (μ) and bandwidth (σ) affect the tuning function.
+    -   `validate_pSFT.m`: Validates the pSFT estimation pipeline by simulating stimulus and BOLD time series from pre-defined pSFT parameters, then estimating parameters and comparing estimates to ground truth. Results are saved under `/validate-pSFT/estimates/` and `/validate-pSFT/figures/`.
 
 ### validate-pSFT
 
-This subdirectory contains scripts for validating and simulating pSFT. `simulate_pSFT` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. `validate_pSFT` performs a complete validation of the estimation pipeline by generating synthetic data with known pSFT parameters, running the estimation procedure, and comparing the estimated parameters to the ground truth values. This validation workflow helps ensure the accuracy and reliability of the pSFT estimation method.
+This subdirectory contains scripts for validating and simulating pSFT. `simulate_pSFT.m` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. `validate_pSFT.m` performs a complete validation of the estimation pipeline by generating synthetic data with known pSFT parameters, running the estimation procedure, and comparing the estimated parameters to the ground truth values. This validation workflow helps ensure the accuracy and reliability of the pSFT estimation method.
 
 
 ## License
