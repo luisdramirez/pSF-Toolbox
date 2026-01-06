@@ -38,9 +38,11 @@ toggles.coarse_grid_search = true;
 toggles.fine_grid_search = true;
 toggles.disp_on = true; % Display progress
 
-save_estimates = true;
-make_voxel_plots = true;
-save_voxel_plots = true;
+toggles.save_validation_results = true;
+toggles.make_summary_plots = true;
+toggles.save_summary_plots = true;
+toggles.make_voxel_plots = true;
+toggles.save_voxel_plots = true;
 
 %% Check for required toolboxes
 
@@ -81,9 +83,9 @@ p.fmincon_options = optimset('MaxFunEvals', 100000, 'MaxIter', 10000, 'display',
 % For reviewer demonstration: use multiple subjects, ROIs, and voxels
 % to demonstrate validation across different conditions
 
-p.num_subjs = 2;
-p.num_ROIs = 3;
-p.num_voxels_per_ROI = 20;
+p.num_subjs = 1;
+p.num_ROIs = 1;
+p.num_voxels_per_ROI = 10;
 
 roi_names = {'V1', 'V2', 'V3'};
 
@@ -111,9 +113,13 @@ gt_sigma_range = [0.3 1.5];  % pSFT linear bandwidth range (cpd)
 gt_beta_range = [1 5];       % BOLD amplitude range
 gt_beta0_range = [-0.5 0.5]; % BOLD baseline range
 
-% BOLD noise parameters
-min_BOLD_noise = 0.01;
-max_BOLD_noise = 0.1;
+% BOLD noise parameters (SNR in dB)
+% Reference: Lerma-Usabiaga et al. 2020 PLOS Computational Biology, Figure 4
+% SNR_dB = 10 * log10(signal_variance / noise_variance)
+% Low noise: SNR = 5.29 dB; Mid noise: SNR = -0.51 dB; High noise: SNR = -4.29 dB
+SNR_levels_dB = [5.29, -0.51, -4.29];  % Low, Mid, High noise
+SNR_level_names = {'Low Noise (5.29 dB)', 'Mid Noise (-0.51 dB)', 'High Noise (-4.29 dB)'};
+num_SNR_levels = length(SNR_levels_dB);
 
 %% Define hemodynamic response function (HRF)
 
@@ -235,16 +241,28 @@ for subj = 1:p.num_subjs
             vox_BOLD = generateBOLD(vox_R, HRF(:, vox), gt_params(3, vox), gt_params(4, vox));
             clean_BOLD(:, vox) = vox_BOLD;
 
-            % Add noise to create measured BOLD
-            noise_level = min_BOLD_noise + (max_BOLD_noise - min_BOLD_noise) * rand();
-            noise = noise_level * randn(num_TRs, 1);
-            noisy_BOLD(:, vox) = vox_BOLD + noise;
-
         end
 
         simulated_data(subj, roi).R = R;
         simulated_data(subj, roi).BOLD = clean_BOLD;
-        simulated_data(subj, roi).measured_BOLD = noisy_BOLD;
+
+        % Add noise at each SNR level
+        % SNR_dB = 10 * log10(signal_var / noise_var)
+        % noise_std = signal_std / 10^(SNR_dB/20)
+        for snr_idx = 1:num_SNR_levels
+            noisy_BOLD = nan(num_TRs, p.num_voxels_per_ROI);
+            SNR_dB = SNR_levels_dB(snr_idx);
+
+            for vox = 1:p.num_voxels_per_ROI
+                signal_std = std(clean_BOLD(:, vox));
+                noise_std = signal_std / (10^(SNR_dB / 20));
+                noise = noise_std * randn(num_TRs, 1);
+                noisy_BOLD(:, vox) = clean_BOLD(:, vox) + noise;
+            end
+
+            simulated_data(subj, roi).measured_BOLD{snr_idx} = noisy_BOLD;
+            simulated_data(subj, roi).SNR_dB(snr_idx) = SNR_dB;
+        end
 
     end
 
@@ -252,11 +270,11 @@ end
 
 if toggles.disp_on, disp('Done!'); end
 
-%% Initialize pSFT struct
+%% Initialize pSFT struct (for each SNR level)
 
 struct_size = cell(p.num_subjs, p.num_ROIs);
 
-all_pSFT = struct('vox_indices', struct_size, ...
+pSFT_template = struct('vox_indices', struct_size, ...
     'measured_BOLD', struct_size, ...
     'HRF', struct_size, ...
     'param_est', struct_size, ...
@@ -269,227 +287,76 @@ all_pSFT = struct('vox_indices', struct_size, ...
     'start_sse', struct_size, ...
     'exitflag', struct_size);
 
-%% Estimate pSFT
+% Initialize cell array for each SNR level
+all_pSFT = cell(1, num_SNR_levels);
+for snr_idx = 1:num_SNR_levels
+    all_pSFT{snr_idx} = pSFT_template;
+end
+
+%% Estimate pSFT for each SNR level
 
 total_elapsed_time = 0;
 
-for subj = 1:p.num_subjs
+for snr_idx = 1:num_SNR_levels
 
-    if toggles.disp_on, disp(['+++ S' num2str(subj) ' +++']); end
+    if toggles.disp_on
+        disp(' ');
+        disp(['====== SNR Level: ' SNR_level_names{snr_idx} ' ======']);
+    end
 
-    for roi = 1:p.num_ROIs
+    for subj = 1:p.num_subjs
 
-        if toggles.disp_on, disp(['- ' roi_names{roi} ' -']); end
+        if toggles.disp_on, disp(['+++ S' num2str(subj) ' +++']); end
 
-        tic;
+        for roi = 1:p.num_ROIs
 
-        I = simulated_data(subj, roi).I;
-        measured_BOLD = simulated_data(subj, roi).measured_BOLD;
-        HRF = HRFs{subj, roi};
+            if toggles.disp_on, disp(['- ' roi_names{roi} ' -']); end
 
-        % Enter estimatePSFT
-        pSFT = estimatePSFT(I, measured_BOLD, HRF, p, toggles);
-        all_pSFT(subj, roi) = pSFT;
+            tic;
 
-        elapsed_time = round(toc / 60, 1);
-        if toggles.disp_on, disp(['Elapsed time: ~' num2str(elapsed_time) ' minute(s).']); disp(' '); end
-        total_elapsed_time = total_elapsed_time + elapsed_time;
+            I = simulated_data(subj, roi).I;
+            measured_BOLD = simulated_data(subj, roi).measured_BOLD{snr_idx};
+            HRF = HRFs{subj, roi};
 
+            % Enter estimatePSFT
+            pSFT = estimatePSFT(I, measured_BOLD, HRF, p, toggles);
+            all_pSFT{snr_idx}(subj, roi) = pSFT;
+
+            elapsed_time = round(toc / 60, 1);
+            if toggles.disp_on, disp(['Elapsed time: ~' num2str(elapsed_time) ' minute(s).']); disp(' '); end
+            total_elapsed_time = total_elapsed_time + elapsed_time;
+
+        end
     end
 end
 
 if toggles.disp_on, disp(['Total elapsed time: ~' num2str(total_elapsed_time) ' minutes']); end
 if toggles.parallelization, delete(gcp); end
 
-%% Save estimates
+%% Define validation filename
 
-estimates_filename = ['validation_pSFT_n' num2str(p.num_subjs) '_' char(curr_time)];
+validation_filename = ['validation_pSFT_n' num2str(p.num_subjs) '_' char(curr_time)];
 
-if save_estimates
-    save([save_dir '/' estimates_filename '.mat'], 'all_pSFT', 'simulated_data', 'p');
-    if toggles.disp_on, disp(['Saved ' estimates_filename ' in /' save_dir]); end
-end
-
-%% Compute validation metrics
+%% Compute validation metrics for each SNR level
 
 if toggles.disp_on, disp(' '); disp('=== Validation Metrics ==='); end
 
-validation_metrics = struct();
+% Initialize validation metrics for each SNR level
+validation_metrics = cell(1, num_SNR_levels);
 
-for subj = 1:p.num_subjs
-    for roi = 1:p.num_ROIs
+% Initialize pooled data for each SNR level
+pooled_data = cell(1, num_SNR_levels);
 
-        gt_params = simulated_data(subj, roi).params;
-        est_params = all_pSFT(subj, roi).param_est;
+for snr_idx = 1:num_SNR_levels
 
-        % Extract mu and sigma (the key pSFT parameters)
-        gt_mu = gt_params(1, :);
-        gt_sigma = gt_params(2, :);
-        est_mu = est_params(1, :);
-        est_sigma = est_params(2, :);
-
-        % Compute bandwidth in octaves for ground truth and estimated pSFT curves
-        num_voxels = size(simulated_data(subj, roi).SFT, 2);
-        gt_bandwidth_oct = nan(1, num_voxels);
-        est_bandwidth_oct = nan(1, num_voxels);
-
-        for vox = 1:num_voxels
-            % Ground truth bandwidth in octaves
-            [gt_bandwidth_oct(vox), ~] = cpd2oct(simulated_data(subj, roi).SFT(:, vox), p.sfs);
-
-            % Estimated bandwidth in octaves
-            [est_bandwidth_oct(vox), ~] = cpd2oct(all_pSFT(subj, roi).est_SFT(:, vox), p.sfs);
-        end
-
-        % Compute RMSE for mu
-        rmse_mu = sqrt(mean((gt_mu - est_mu).^2));
-
-        % Compute RMSE for sigma
-        rmse_sigma = sqrt(mean((gt_sigma - est_sigma).^2));
-
-        % Compute RMSE for bandwidth in octaves
-        rmse_bandwidth_oct = sqrt(mean((gt_bandwidth_oct - est_bandwidth_oct).^2));
-
-        % Compute correlation between ground truth and estimates
-        corr_mu = corr(gt_mu', est_mu');
-        corr_sigma = corr(gt_sigma', est_sigma');
-        corr_bandwidth_oct = corr(gt_bandwidth_oct', est_bandwidth_oct');
-
-        % Mean R^2 across voxels
-        mean_r2 = mean(all_pSFT(subj, roi).r2);
-
-        % Store metrics
-        validation_metrics(subj, roi).rmse_mu = rmse_mu;
-        validation_metrics(subj, roi).rmse_sigma = rmse_sigma;
-        validation_metrics(subj, roi).rmse_bandwidth_oct = rmse_bandwidth_oct;
-        validation_metrics(subj, roi).corr_mu = corr_mu;
-        validation_metrics(subj, roi).corr_sigma = corr_sigma;
-        validation_metrics(subj, roi).corr_bandwidth_oct = corr_bandwidth_oct;
-        validation_metrics(subj, roi).mean_r2 = mean_r2;
-
-        % Display metrics
-        if toggles.disp_on
-            disp(['S' num2str(subj) ', ' roi_names{roi} ':']);
-            disp(['  RMSE (mu):           ' num2str(round(rmse_mu, 4))]);
-            disp(['  RMSE (sigma):        ' num2str(round(rmse_sigma, 4))]);
-            disp(['  RMSE (bandwidth oct): ' num2str(round(rmse_bandwidth_oct, 4))]);
-            disp(['  Corr (mu):           ' num2str(round(corr_mu, 4))]);
-            disp(['  Corr (sigma):        ' num2str(round(corr_sigma, 4))]);
-            disp(['  Corr (bandwidth oct): ' num2str(round(corr_bandwidth_oct, 4))]);
-            disp(['  Mean R^2:            ' num2str(round(mean_r2, 4))]);
-            disp(' ');
-        end
-
-    end
-end
-
-%% Plot settings
-
-plot_settings = plotSettings();
-
-%% Plot voxel fits
-
-figure_save_dir = fullfile(figure_dir, estimates_filename);
-if ~exist(figure_save_dir, 'dir'), mkdir(figure_save_dir); end
-
-if make_voxel_plots
-
-    num_voxels_to_plot = 3;
-
-    fg = figure('Visible', 'on', 'Color', 'w');
-    set(0, 'CurrentFigure', fg);
-
-    for subj = 1:p.num_subjs
-        for roi = 1:p.num_ROIs
-
-            if save_voxel_plots
-                figure_path = fullfile(figure_save_dir, ['S' num2str(subj)], roi_names{roi});
-                if ~exist(figure_path, 'dir'), mkdir(figure_path); end
-            end
-
-            gt_params = simulated_data(subj, roi).params;
-            est_params = all_pSFT(subj, roi).param_est;
-
-            for vox = 1:num_voxels_to_plot
-
-                %% pSFT curve: Ground truth vs Estimate
-
-                figure_name = ['Vox #' num2str(vox) ' pSFT'];
-
-                % Ground truth
-                semilogx(p.sfs, simulated_data(subj, roi).SFT(:, vox), ...
-                    'Color', plot_settings.colors.black, 'LineWidth', plot_settings.line_width);
-                hold on;
-
-                % Estimate
-                semilogx(p.sfs, all_pSFT(subj, roi).est_SFT(:, vox), ...
-                    'Color', plot_settings.colors.red, 'LineWidth', plot_settings.line_width);
-
-                % Format figure
-                xlabel('Spatial Frequency (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-                ylabel('Response (R)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-                xlim([p.sf_min p.sf_max]); ylim([0 1]);
-                xticks([p.sf_min 1 5 p.sf_max]); xticklabels([p.sf_min 1 5 p.sf_max]);
-                set(gca, 'TickDir', 'out', 'TickLength', [plot_settings.tick_length plot_settings.tick_length], ...
-                    'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
-                box off;
-
-                title_str = sprintf('GT: \\mu=%.2f, \\sigma=%.2f | Est: \\mu=%.2f, \\sigma=%.2f', ...
-                    gt_params(1, vox), gt_params(2, vox), est_params(1, vox), est_params(2, vox));
-                title(title_str, 'FontSize', 10);
-
-                legend({'ground truth', 'estimate'}, 'Location', 'northeast', 'Box', 'off');
-
-                hold off;
-
-                if save_voxel_plots
-                    saveas(gcf, [figure_path '/' figure_name '.pdf']); clf;
-                    if toggles.disp_on, disp(['Saved ' figure_name '.pdf in /' figure_path]); end
-                end
-
-                %% BOLD time series: Measured vs Estimated vs Ground Truth
-
-                figure_name = ['Vox #' num2str(vox) ' BOLD Time Series'];
-
-                time_axis = (1:num_TRs) * TR;
-
-                % Measured
-                plot(time_axis, all_pSFT(subj, roi).measured_BOLD(:, vox), ...
-                    'Color', plot_settings.colors.black, 'LineWidth', 0.5);
-                hold on;
-
-                % Estimated
-                plot(time_axis, all_pSFT(subj, roi).est_BOLD(:, vox), ...
-                    'Color', plot_settings.colors.red, 'LineWidth', plot_settings.line_width);
-
-                % Format figure
-                xlabel('Time (s)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-                ylabel('BOLD (% change)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-                set(gca, 'TickDir', 'out', 'TickLength', [plot_settings.tick_length plot_settings.tick_length], ...
-                    'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
-                box off;
-
-                title(['R^2 = ' num2str(round(all_pSFT(subj, roi).r2(vox), 3))]);
-
-                legend({'simulated', 'estimate'}, 'Location', 'best', 'Box', 'off');
-
-                hold off;
-
-                if save_voxel_plots
-                    saveas(gcf, [figure_path '/' figure_name '.pdf']); clf;
-                    if toggles.disp_on, disp(['Saved ' figure_name '.pdf in /' figure_path]); end
-                end
-
-            end
-
-        end
+    if toggles.disp_on
+        disp(' ');
+        disp(['--- ' SNR_level_names{snr_idx} ' ---']);
     end
 
-    %% Summary scatter plots: Ground truth vs Estimates
+    validation_metrics{snr_idx} = struct();
 
-    figure_name = 'Validation Summary';
-
-    % Collect all data across subjects and ROIs
+    % Collect all data across subjects and ROIs for pooled analysis
     all_gt_mu = [];
     all_est_mu = [];
     all_gt_sigma = [];
@@ -499,81 +366,343 @@ if make_voxel_plots
 
     for subj = 1:p.num_subjs
         for roi = 1:p.num_ROIs
-            all_gt_mu = [all_gt_mu, simulated_data(subj, roi).params(1, :)];
-            all_est_mu = [all_est_mu, all_pSFT(subj, roi).param_est(1, :)];
-            all_gt_sigma = [all_gt_sigma, simulated_data(subj, roi).params(2, :)];
-            all_est_sigma = [all_est_sigma, all_pSFT(subj, roi).param_est(2, :)];
 
-            % Calculate bandwidth in octaves for ground truth and estimated pSFT curves
+            gt_params = simulated_data(subj, roi).params;
+            est_params = all_pSFT{snr_idx}(subj, roi).param_est;
+
+            % Extract mu and sigma (the key pSFT parameters)
+            gt_mu = gt_params(1, :);
+            gt_sigma = gt_params(2, :);
+            est_mu = est_params(1, :);
+            est_sigma = est_params(2, :);
+
+            % Compute bandwidth in octaves for ground truth and estimated pSFT curves
             num_voxels = size(simulated_data(subj, roi).SFT, 2);
-            gt_bandwidth_oct_roi = nan(1, num_voxels);
-            est_bandwidth_oct_roi = nan(1, num_voxels);
+            gt_bandwidth_oct = nan(1, num_voxels);
+            est_bandwidth_oct = nan(1, num_voxels);
 
             for vox = 1:num_voxels
-                % Ground truth bandwidth in octaves
-                [gt_bandwidth_oct_roi(vox), ~] = cpd2oct(simulated_data(subj, roi).SFT(:, vox), p.sfs);
-
-                % Estimated bandwidth in octaves
-                [est_bandwidth_oct_roi(vox), ~] = cpd2oct(all_pSFT(subj, roi).est_SFT(:, vox), p.sfs);
+                [gt_bandwidth_oct(vox), ~] = cpd2oct(simulated_data(subj, roi).SFT(:, vox), p.sfs);
+                [est_bandwidth_oct(vox), ~] = cpd2oct(all_pSFT{snr_idx}(subj, roi).est_SFT(:, vox), p.sfs);
             end
 
-            all_gt_bandwidth_oct = [all_gt_bandwidth_oct, gt_bandwidth_oct_roi];
-            all_est_bandwidth_oct = [all_est_bandwidth_oct, est_bandwidth_oct_roi];
+            % Store bandwidth in simulated_data for later use in plotting (only on first SNR level)
+            if snr_idx == 1
+                simulated_data(subj, roi).bandwidth_oct = gt_bandwidth_oct;
+            end
+            all_pSFT{snr_idx}(subj, roi).est_bandwidth_oct = est_bandwidth_oct;
+
+            % Accumulate for pooled analysis
+            all_gt_mu = [all_gt_mu, gt_mu];
+            all_est_mu = [all_est_mu, est_mu];
+            all_gt_sigma = [all_gt_sigma, gt_sigma];
+            all_est_sigma = [all_est_sigma, est_sigma];
+            all_gt_bandwidth_oct = [all_gt_bandwidth_oct, gt_bandwidth_oct];
+            all_est_bandwidth_oct = [all_est_bandwidth_oct, est_bandwidth_oct];
+
+            % Compute per-subject/ROI metrics
+            errors_mu = gt_mu - est_mu;
+            errors_bandwidth_oct = gt_bandwidth_oct - est_bandwidth_oct;
+
+            rmse_mu = sqrt(mean(errors_mu.^2));
+            rmse_bandwidth_oct = sqrt(mean(errors_bandwidth_oct.^2));
+
+            corr_mu = corr(gt_mu', est_mu');
+            corr_bandwidth_oct = corr(gt_bandwidth_oct', est_bandwidth_oct');
+
+            mean_r2 = mean(all_pSFT{snr_idx}(subj, roi).r2);
+
+            % Store per-subject/ROI metrics
+            validation_metrics{snr_idx}(subj, roi).rmse_mu = rmse_mu;
+            validation_metrics{snr_idx}(subj, roi).rmse_bandwidth_oct = rmse_bandwidth_oct;
+            validation_metrics{snr_idx}(subj, roi).corr_mu = corr_mu;
+            validation_metrics{snr_idx}(subj, roi).corr_bandwidth_oct = corr_bandwidth_oct;
+            validation_metrics{snr_idx}(subj, roi).mean_r2 = mean_r2;
+
+            % Display per-subject/ROI metrics
+            if toggles.disp_on
+                disp(['S' num2str(subj) ', ' roi_names{roi} ':']);
+                disp(['  RMSE (mu):           ' num2str(round(rmse_mu, 4))]);
+                disp(['  RMSE (bandwidth oct): ' num2str(round(rmse_bandwidth_oct, 4))]);
+                disp(['  Corr (mu):           ' num2str(round(corr_mu, 4))]);
+                disp(['  Corr (bandwidth oct): ' num2str(round(corr_bandwidth_oct, 4))]);
+                disp(['  Mean R^2:            ' num2str(round(mean_r2, 4))]);
+                disp(' ');
+            end
+
         end
     end
 
-    % Calculate total number of voxels
-    num_total_voxels = length(all_gt_mu);
+    % Store pooled data for this SNR level
+    pooled_data{snr_idx}.all_gt_mu = all_gt_mu;
+    pooled_data{snr_idx}.all_est_mu = all_est_mu;
+    pooled_data{snr_idx}.all_gt_sigma = all_gt_sigma;
+    pooled_data{snr_idx}.all_est_sigma = all_est_sigma;
+    pooled_data{snr_idx}.all_gt_bandwidth_oct = all_gt_bandwidth_oct;
+    pooled_data{snr_idx}.all_est_bandwidth_oct = all_est_bandwidth_oct;
+    pooled_data{snr_idx}.SNR_dB = SNR_levels_dB(snr_idx);
 
-    % Subplot 1: pSFT peak
-    subplot(1, 3, 1);
-    scatter(all_gt_mu, all_est_mu, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
+    % Compute pooled RMSE and correlation for this SNR level
+    pooled_data{snr_idx}.rmse_mu = sqrt(mean((all_gt_mu - all_est_mu).^2));
+    pooled_data{snr_idx}.rmse_bandwidth_oct = sqrt(mean((all_gt_bandwidth_oct - all_est_bandwidth_oct).^2));
+    pooled_data{snr_idx}.corr_mu = corr(all_gt_mu', all_est_mu');
+    pooled_data{snr_idx}.corr_bandwidth_oct = corr(all_gt_bandwidth_oct', all_est_bandwidth_oct');
+
+    if toggles.disp_on
+        disp(['Pooled metrics for ' SNR_level_names{snr_idx} ':']);
+        disp(['  RMSE (mu):           ' num2str(round(pooled_data{snr_idx}.rmse_mu, 4))]);
+        disp(['  RMSE (bandwidth oct): ' num2str(round(pooled_data{snr_idx}.rmse_bandwidth_oct, 4))]);
+        disp(['  Corr (mu):           ' num2str(round(pooled_data{snr_idx}.corr_mu, 4))]);
+        disp(['  Corr (bandwidth oct): ' num2str(round(pooled_data{snr_idx}.corr_bandwidth_oct, 4))]);
+    end
+
+end  % End SNR level loop
+
+%% Save validation results
+
+if toggles.save_validation_results
+    save([save_dir '/' validation_filename '.mat'], 'all_pSFT', 'simulated_data', 'validation_metrics', 'pooled_data', 'SNR_levels_dB', 'SNR_level_names', 'p');
+    if toggles.disp_on, disp(['Saved ' validation_filename ' in /' save_dir]); end
+end
+
+%% Plot settings
+
+plot_settings = plotSettings();
+
+%% Plot voxel fits
+
+figure_save_dir = fullfile(figure_dir, validation_filename);
+if ~exist(figure_save_dir, 'dir'), mkdir(figure_save_dir); end
+
+if toggles.make_voxel_plots
+
+    num_voxels_to_plot = 3;
+    snr_idx_for_voxel_plots = 1;  % Use low noise level for voxel plots
+
+    fg = figure('Visible', 'on', 'Color', 'w');
+    set(0, 'CurrentFigure', fg);
+
+    for subj = 1:p.num_subjs
+        for roi = 1:p.num_ROIs
+
+            if toggles.save_voxel_plots
+                figure_path = fullfile(figure_save_dir, ['S' num2str(subj)], roi_names{roi});
+                if ~exist(figure_path, 'dir'), mkdir(figure_path); end
+            end
+
+            gt_params = simulated_data(subj, roi).params;
+            est_params = all_pSFT{snr_idx_for_voxel_plots}(subj, roi).param_est;
+
+            for vox = 1:num_voxels_to_plot
+
+                %% pSFT curve (simulated and estimated)
+
+                figure_name = ['Vox #' num2str(vox) ' pSFT'];
+
+                % Simulated
+                semilogx(p.sfs, simulated_data(subj, roi).SFT(:, vox), ...
+                    'Color', plot_settings.colors.black, 'LineWidth', plot_settings.line_width);
+                hold on;
+
+                % Estimate
+                semilogx(p.sfs, all_pSFT{snr_idx_for_voxel_plots}(subj, roi).est_SFT(:, vox), ...
+                    'Color', plot_settings.colors.red, 'LineWidth', plot_settings.line_width);
+
+                % Format figure
+                xlabel('Spatial frequency (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+                ylabel('Response (au)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+                xlim([p.sf_min p.sf_max]); ylim([0 1]);
+                xticks([p.sf_min 1 5 p.sf_max]); xticklabels([p.sf_min 1 5 p.sf_max]);
+                set(gca, 'TickDir', 'out', 'TickLength', [plot_settings.tick_length plot_settings.tick_length], ...
+                    'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+                box off;
+
+                title_str = sprintf('Simulated: \\mu=%.2f, \\sigma=%.2f | Estimated: \\mu=%.2f, \\sigma=%.2f', ...
+                    gt_params(1, vox), gt_params(2, vox), est_params(1, vox), est_params(2, vox));
+                title(title_str, 'FontSize', 10);
+
+                legend({'simulated', 'estimate'}, 'Location', 'northeast', 'Box', 'off');
+
+                hold off;
+
+                if toggles.save_voxel_plots
+                    saveas(gcf, [figure_path '/' figure_name '.pdf']); clf;
+                    if toggles.disp_on, disp(['Saved ' figure_name '.pdf in /' figure_path]); end
+                end
+
+                %% BOLD time series (simulated and estimated)
+
+                figure_name = ['Vox #' num2str(vox) ' BOLD Time Series'];
+
+                time_axis = (1:num_TRs) * TR;
+
+                % Simulated (noisy)
+                plot(time_axis, all_pSFT{snr_idx_for_voxel_plots}(subj, roi).measured_BOLD(:, vox), ...
+                    'Color', plot_settings.colors.black, 'LineWidth', plot_settings.line_width);
+                hold on;
+
+                % Estimated
+                plot(time_axis, all_pSFT{snr_idx_for_voxel_plots}(subj, roi).est_BOLD(:, vox), ...
+                    'Color', plot_settings.colors.red, 'LineWidth', plot_settings.line_width);
+
+                % Format figure
+                xlabel('Time (s)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+                ylabel('BOLD (% change)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+                set(gca, 'TickDir', 'out', 'TickLength', [plot_settings.tick_length plot_settings.tick_length], ...
+                    'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+                box off;
+
+                title(['R^2 = ' num2str(round(all_pSFT{snr_idx_for_voxel_plots}(subj, roi).r2(vox), 3))]);
+
+                legend({'simulated', 'estimate'}, 'Location', 'best', 'Box', 'off');
+
+                hold off;
+
+                if toggles.save_voxel_plots
+                    saveas(gcf, [figure_path '/' figure_name '.pdf']); clf;
+                    if toggles.disp_on, disp(['Saved ' figure_name '.pdf in /' figure_path]); end
+                end
+
+            end
+
+        end
+    end
+
+    close(fg);
+
+end
+
+%% Summary plots
+
+if toggles.make_summary_plots
+
+    fg = figure('Visible', 'on', 'Color', 'w');
+    set(0, 'CurrentFigure', fg);
+
+    %% Effect of noise on parameter recovery (scatter plots for each SNR level)
+
+    % Define colors for each SNR level
+    snr_colors = {plot_settings.colors.green, [0.8 0.5 0.1], plot_settings.colors.red};
+
+    figure_name = 'Simulated vs Estimated by SNR Level';
+
+    for snr_idx = 1:num_SNR_levels
+
+        all_gt_mu = pooled_data{snr_idx}.all_gt_mu;
+        all_est_mu = pooled_data{snr_idx}.all_est_mu;
+        all_gt_bandwidth_oct = pooled_data{snr_idx}.all_gt_bandwidth_oct;
+        all_est_bandwidth_oct = pooled_data{snr_idx}.all_est_bandwidth_oct;
+        num_total_voxels = length(all_gt_mu);
+
+        % Subplot row 1: pSFT peak (mu)
+        subplot(2, num_SNR_levels, snr_idx);
+        scatter(all_gt_mu, all_est_mu, 30, snr_colors{snr_idx}, 'filled', 'MarkerFaceAlpha', 0.7);
+        hold on;
+        max_mu = max([all_gt_mu, all_est_mu]);
+        plot([0 max_mu], [0 max_mu], 'k--', 'LineWidth', 1);
+        hold off;
+
+        % Format figure
+        xlabel('\mu_{sim} (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+        if snr_idx == 1
+            ylabel('\mu_{est} (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+        end
+        max_mu_rounded = ceil(max_mu);
+        tick_step_mu = max(1, round(max_mu_rounded/4));
+        tick_values_mu = 0:tick_step_mu:max_mu_rounded;
+        tick_labels_mu = arrayfun(@(x) num2str(x), tick_values_mu, 'UniformOutput', false);
+        xticks(tick_values_mu); yticks(tick_values_mu);
+        xticklabels(tick_labels_mu); yticklabels(tick_labels_mu);
+        ylim([0 max_mu_rounded]); xlim([0 max_mu_rounded]);
+        title({SNR_level_names{snr_idx}, ['r = ' num2str(round(pooled_data{snr_idx}.corr_mu, 3))]}, ...
+            'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+        set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+        axis square; box off;
+
+        % Subplot row 2: bandwidth in octaves
+        subplot(2, num_SNR_levels, num_SNR_levels + snr_idx);
+        scatter(all_gt_bandwidth_oct, all_est_bandwidth_oct, 30, snr_colors{snr_idx}, 'filled', 'MarkerFaceAlpha', 0.7);
+        hold on;
+        max_bandwidth_oct = max([all_gt_bandwidth_oct, all_est_bandwidth_oct]);
+        plot([0 max_bandwidth_oct], [0 max_bandwidth_oct], 'k--', 'LineWidth', 1);
+        hold off;
+
+        % Format figure
+        xlabel('\sigma_{sim} (oct)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+        if snr_idx == 1
+            ylabel('\sigma_{est} (oct)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+        end
+        max_bandwidth_oct_rounded = ceil(max_bandwidth_oct);
+        tick_step_bandwidth_oct = max(1, round(max_bandwidth_oct_rounded/4));
+        tick_values_bandwidth_oct = 0:tick_step_bandwidth_oct:max_bandwidth_oct_rounded;
+        tick_labels_bandwidth_oct = arrayfun(@(x) num2str(x), tick_values_bandwidth_oct, 'UniformOutput', false);
+        xticks(tick_values_bandwidth_oct); yticks(tick_values_bandwidth_oct);
+        xticklabels(tick_labels_bandwidth_oct); yticklabels(tick_labels_bandwidth_oct);
+        ylim([0 max_bandwidth_oct_rounded]); xlim([0 max_bandwidth_oct_rounded]);
+        title(['r = ' num2str(round(pooled_data{snr_idx}.corr_bandwidth_oct, 3))], ...
+            'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+        set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+        axis square; box off;
+
+    end
+
+    if toggles.save_summary_plots
+        saveas(gcf, fullfile(figure_save_dir, [figure_name '.pdf']));
+        if toggles.disp_on, disp(['Saved ' figure_name '.pdf in /' figure_save_dir]); end
+    end
+    clf;
+
+    %% Effect of noise on RMSE (line plot)
+
+    figure_name = 'Effect of Noise on Parameter Recovery';
+
+    % Extract RMSE values for each SNR level
+    rmse_mu_by_snr = nan(1, num_SNR_levels);
+    rmse_bandwidth_by_snr = nan(1, num_SNR_levels);
+    corr_mu_by_snr = nan(1, num_SNR_levels);
+    corr_bandwidth_by_snr = nan(1, num_SNR_levels);
+
+    for snr_idx = 1:num_SNR_levels
+        rmse_mu_by_snr(snr_idx) = pooled_data{snr_idx}.rmse_mu;
+        rmse_bandwidth_by_snr(snr_idx) = pooled_data{snr_idx}.rmse_bandwidth_oct;
+        corr_mu_by_snr(snr_idx) = pooled_data{snr_idx}.corr_mu;
+        corr_bandwidth_by_snr(snr_idx) = pooled_data{snr_idx}.corr_bandwidth_oct;
+    end
+
+    % Subplot 1: RMSE vs SNR
+    subplot(1, 2, 1);
+    plot(SNR_levels_dB, rmse_mu_by_snr, '-o', 'Color', plot_settings.colors.green, ...
+        'LineWidth', plot_settings.line_width, 'MarkerFaceColor', plot_settings.colors.green, 'MarkerSize', 8);
     hold on;
-    max_mu = max([all_gt_mu, all_est_mu]);
-    plot([0 max_mu], [0 max_mu], 'k--', 'LineWidth', 1);
-
-    % Format figure
-    xlabel('Ground Truth \mu (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylabel('Estimated \mu (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylim([0 max_mu]); xlim([0 max_mu]);
-    title(['r = ' num2str(round(corr(all_gt_mu', all_est_mu'), 3)) ', n = ' num2str(num_total_voxels)]);
-    set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
-    axis square; box off;
+    plot(SNR_levels_dB, rmse_bandwidth_by_snr, '-s', 'Color', plot_settings.colors.red, ...
+        'LineWidth', plot_settings.line_width, 'MarkerFaceColor', plot_settings.colors.red, 'MarkerSize', 8);
     hold off;
 
-    % Subplot 2: pSFT linear bandwidth
-    subplot(1, 3, 2);
-    scatter(all_gt_sigma, all_est_sigma, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
-    hold on;
-    max_sigma = max([all_gt_sigma, all_est_sigma]);
-    plot([0 max_sigma], [0 max_sigma], 'k--', 'LineWidth', 1);
-
-    % Format figure
-    xlabel('Ground Truth \sigma (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylabel('Estimated \sigma (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylim([0 max_sigma]); xlim([0 max_sigma]);
-    title(['r = ' num2str(round(corr(all_gt_sigma', all_est_sigma'), 3)) ', n = ' num2str(num_total_voxels)]);
+    xlabel('SNR (dB)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    ylabel('RMSE', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    title('Effect of Noise on RMSE', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+    legend({'\mu (cpd)', '\sigma (octaves)'}, 'Location', 'northeast', 'Box', 'off');
     set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
     axis square; box off;
-    hold off;
 
-    % Subplot 3: pSFT bandwidth in octaves
-    subplot(1, 3, 3);
-    scatter(all_gt_bandwidth_oct, all_est_bandwidth_oct, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
+    % Subplot 2: Correlation vs SNR
+    subplot(1, 2, 2);
+    plot(SNR_levels_dB, corr_mu_by_snr, '-o', 'Color', plot_settings.colors.green, ...
+        'LineWidth', plot_settings.line_width, 'MarkerFaceColor', plot_settings.colors.green, 'MarkerSize', 8);
     hold on;
-    max_bandwidth_oct = max([all_gt_bandwidth_oct, all_est_bandwidth_oct]);
-    plot([0 max_bandwidth_oct], [0 max_bandwidth_oct], 'k--', 'LineWidth', 1);
-
-    % Format figure
-    xlabel('Ground Truth Bandwidth (octaves)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylabel('Estimated Bandwidth (octaves)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylim([0 max_bandwidth_oct]); xlim([0 max_bandwidth_oct]);
-    title(['r = ' num2str(round(corr(all_gt_bandwidth_oct', all_est_bandwidth_oct'), 3)) ', n = ' num2str(num_total_voxels)]);
-    set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
-    axis square; box off;
+    plot(SNR_levels_dB, corr_bandwidth_by_snr, '-s', 'Color', plot_settings.colors.red, ...
+        'LineWidth', plot_settings.line_width, 'MarkerFaceColor', plot_settings.colors.red, 'MarkerSize', 8);
     hold off;
 
-    if save_voxel_plots
+    xlabel('SNR (dB)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    ylabel('Correlation (r)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    title('Effect of Noise on Correlation', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+    legend({'\mu (cpd)', '\sigma (octaves)'}, 'Location', 'southwest', 'Box', 'off');
+    set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
+    ylim([0 1]);
+    axis square; box off;
+
+    if toggles.save_summary_plots
         saveas(gcf, fullfile(figure_save_dir, [figure_name '.pdf']));
         if toggles.disp_on, disp(['Saved ' figure_name '.pdf in /' figure_save_dir]); end
     end
