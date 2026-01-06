@@ -92,7 +92,7 @@ Parameters:
 
 ### validate-pSFT
 
-This subdirectory contains scripts for validating and simulating pSFT. `simulate_pSFT.m` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. `validate_pSFT.m` performs a complete validation of the estimation pipeline by generating synthetic data with known pSFT parameters, running the estimation procedure, and comparing the estimated parameters to the ground truth values. This validation workflow helps ensure the accuracy and reliability of the pSFT estimation method.
+This subdirectory contains scripts for validating and simulating pSFT. `simulate_pSFT.m` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. `validate_pSFT.m` performs a complete validation of the estimation pipeline by generating synthetic data with known pSFT parameters, running the estimation procedure, and comparing the estimated parameters to the ground truth values.
 
 
 ## License
