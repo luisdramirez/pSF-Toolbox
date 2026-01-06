@@ -78,10 +78,12 @@ p.pSFT_bounds(2,:) = [0.009, 0.1, -25, -10]; % lower bounds
 p.fmincon_options = optimset('MaxFunEvals', 100000, 'MaxIter', 10000, 'display', 'off');
 
 %% Simulation parameters
+% For reviewer demonstration: use multiple subjects, ROIs, and voxels
+% to demonstrate validation across different conditions
 
 p.num_subjs = 2;
 p.num_ROIs = 3;
-p.num_voxels_per_ROI = 10;
+p.num_voxels_per_ROI = 20;
 
 roi_names = {'V1', 'V2', 'V3'};
 
@@ -371,7 +373,7 @@ if ~exist(figure_save_dir, 'dir'), mkdir(figure_save_dir); end
 
 if make_voxel_plots
 
-    num_voxels_to_plot = 1; % Number of voxels to plot per ROI
+    num_voxels_to_plot = 3;
 
     fg = figure('Visible', 'on', 'Color', 'w');
     set(0, 'CurrentFigure', fg);
@@ -395,7 +397,7 @@ if make_voxel_plots
 
                 % Ground truth
                 semilogx(p.sfs, simulated_data(subj, roi).SFT(:, vox), ...
-                    'Color', plot_settings.colors.green, 'LineWidth', plot_settings.line_width);
+                    'Color', plot_settings.colors.black, 'LineWidth', plot_settings.line_width);
                 hold on;
 
                 % Estimate
@@ -405,7 +407,7 @@ if make_voxel_plots
                 % Format figure
                 xlabel('Spatial Frequency (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
                 ylabel('Response (R)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-                xlim([p.sf_min p.sf_max]); ylim([0 1.1]);
+                xlim([p.sf_min p.sf_max]); ylim([0 1]);
                 xticks([p.sf_min 1 5 p.sf_max]); xticklabels([p.sf_min 1 5 p.sf_max]);
                 set(gca, 'TickDir', 'out', 'TickLength', [plot_settings.tick_length plot_settings.tick_length], ...
                     'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
@@ -415,7 +417,7 @@ if make_voxel_plots
                     gt_params(1, vox), gt_params(2, vox), est_params(1, vox), est_params(2, vox));
                 title(title_str, 'FontSize', 10);
 
-                legend({'Ground Truth', 'Estimate'}, 'Location', 'northeast', 'Box', 'off');
+                legend({'ground truth', 'estimate'}, 'Location', 'northeast', 'Box', 'off');
 
                 hold off;
 
@@ -430,7 +432,7 @@ if make_voxel_plots
 
                 time_axis = (1:num_TRs) * TR;
 
-                % Measured (noisy)
+                % Measured
                 plot(time_axis, all_pSFT(subj, roi).measured_BOLD(:, vox), ...
                     'Color', plot_settings.colors.black, 'LineWidth', 0.5);
                 hold on;
@@ -448,7 +450,7 @@ if make_voxel_plots
 
                 title(['R^2 = ' num2str(round(all_pSFT(subj, roi).r2(vox), 3))]);
 
-                legend({'Measured (noisy)', 'Estimate'}, 'Location', 'best', 'Box', 'off');
+                legend({'simulated', 'estimate'}, 'Location', 'best', 'Box', 'off');
 
                 hold off;
 
@@ -481,9 +483,12 @@ if make_voxel_plots
         end
     end
 
+    % Calculate total number of voxels
+    num_total_voxels = length(all_gt_mu);
+
     % Subplot 1: pSFT peak
     subplot(1, 2, 1);
-    scatter(all_gt_mu, all_est_mu, 50, plot_settings.colors.blue, 'filled', 'MarkerFaceAlpha', 0.7);
+    scatter(all_gt_mu, all_est_mu, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
     hold on;
     max_mu = max([all_gt_mu, all_est_mu]);
     plot([0 max_mu], [0 max_mu], 'k--', 'LineWidth', 1);
@@ -491,22 +496,24 @@ if make_voxel_plots
     % Format figure
     xlabel('Ground Truth \mu (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
     ylabel('Estimated \mu (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    title(['r = ' num2str(round(corr(all_gt_mu', all_est_mu'), 3))]);
+    ylim([0 max_mu]); xlim([0 max_mu]);
+    title(['r = ' num2str(round(corr(all_gt_mu', all_est_mu'), 3)) ', n = ' num2str(num_total_voxels)]);
     set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
     axis square; box off;
     hold off;
 
     % Subplot 2: pSFT linear bandwidth
     subplot(1, 2, 2);
-    scatter(all_gt_sigma, all_est_sigma, 50, plot_settings.colors.purple, 'filled', 'MarkerFaceAlpha', 0.7);
+    scatter(all_gt_sigma, all_est_sigma, 50, plot_settings.colors.green, 'filled', 'MarkerFaceAlpha', 0.7);
     hold on;
     max_sigma = max([all_gt_sigma, all_est_sigma]);
     plot([0 max_sigma], [0 max_sigma], 'k--', 'LineWidth', 1);
 
     % Format figure
-    xlabel('Ground Truth \sigma', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    ylabel('Estimated \sigma', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
-    title(['r = ' num2str(round(corr(all_gt_sigma', all_est_sigma'), 3))]);
+    xlabel('Ground Truth \sigma (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    ylabel('Estimated \sigma (cpd)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
+    ylim([0 max_sigma]); xlim([0 max_sigma]);
+    title(['r = ' num2str(round(corr(all_gt_sigma', all_est_sigma'), 3)) ', n = ' num2str(num_total_voxels)]);
     set(gca, 'TickDir', 'out', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_tick_font_size);
     axis square; box off;
     hold off;
