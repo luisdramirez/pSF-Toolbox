@@ -51,7 +51,7 @@ checkRequiredToolboxes(toggles);
 
 %% Parallelization setup for parfor loop
 
-p.num_cores = 4;
+p.num_cores = 8;
 p.num_chunks = p.num_cores - 1;
 
 if toggles.parallelization
@@ -117,10 +117,13 @@ gt_beta0_range = [-0.5 0.5]; % BOLD baseline range
 % BOLD noise parameters (SNR in dB)
 % Reference: Lerma-Usabiaga et al. 2020 PLOS Computational Biology, Figure 4
 % SNR_dB = 10 * log10(signal_variance / noise_variance)
-% Low noise: SNR = 5.29 dB; Mid noise: SNR = -0.51 dB; High noise: SNR = -4.29 dB
+% Default: Low noise: SNR = 5.29 dB; Mid noise: SNR = -0.51 dB; High noise: SNR = -4.29 dB
 SNR_levels_dB = [5.29, -0.51, -4.29];  % Low, Mid, High noise
-SNR_level_names = {'Low Noise (5.29 dB)', 'Mid Noise (-0.51 dB)', 'High Noise (-4.29 dB)'};
 num_SNR_levels = length(SNR_levels_dB);
+SNR_level_names = cell(1, num_SNR_levels);
+for i = 1:num_SNR_levels
+    SNR_level_names{i} = sprintf('SNR: %.2f dB', SNR_levels_dB(i));
+end
 
 %% Define hemodynamic response function (HRF)
 
@@ -314,6 +317,31 @@ end
 
 plot_settings = plotSettings();
 
+% Generate colors for SNR levels (green → yellow → orange → red)
+key_colors = [
+    plot_settings.colors.green;      % Green
+    [0.9, 0.8, 0];                   % Yellow (darker)
+    [0.8, 0.5, 0.1];                 % Orange
+    plot_settings.colors.red         % Red
+    ];
+if num_SNR_levels == 1
+    snr_colors = {key_colors(1, :)};
+else
+    color_indices = linspace(1, size(key_colors, 1), num_SNR_levels);
+    snr_colors = cell(1, num_SNR_levels);
+    for i = 1:num_SNR_levels
+        idx = color_indices(i);
+        idx_low = floor(idx);
+        idx_high = min(ceil(idx), size(key_colors, 1));
+        if idx_low == idx_high
+            snr_colors{i} = key_colors(idx_low, :);
+        else
+            t = idx - idx_low;
+            snr_colors{i} = (1 - t) * key_colors(idx_low, :) + t * key_colors(idx_high, :);
+        end
+    end
+end
+
 %% Plot voxel fits
 
 figure_save_dir = fullfile(figure_dir, validation_filename);
@@ -391,7 +419,7 @@ if toggles.make_voxel_plots
 
                 % Estimated
                 plot(time_axis, all_pSFT{snr_idx_for_voxel_plots}(subj, roi).est_BOLD(1:num_TRs_to_plot, vox), ...
-                    'Color', plot_settings.colors.red, 'LineWidth', plot_settings.line_width);
+                    'Color', plot_settings.colors.green, 'LineWidth', plot_settings.line_width);
 
                 % Format figure
                 xlabel('Time (s)', 'FontName', plot_settings.font_type, 'FontSize', plot_settings.axes_label_font_size);
@@ -415,9 +443,6 @@ if toggles.make_voxel_plots
                 %% BOLD time series at each noise level
 
                 figure_name = ['Vox #' num2str(vox) ' BOLD by SNR Level'];
-
-                % Colors matching scatter plots: green (low), orange (mid), red (high)
-                snr_colors = {plot_settings.colors.green, [0.8 0.5 0.1], plot_settings.colors.red};
 
                 % Compute common y-axis limits across all noise levels
                 all_bold_values = simulated_data(subj, roi).BOLD(1:num_TRs_to_plot, vox);
@@ -478,9 +503,6 @@ if toggles.make_summary_plots
     set(0, 'CurrentFigure', fg);
 
     %% Effect of noise on parameter recovery (scatter plots for each SNR level)
-
-    % Define colors for each SNR level
-    snr_colors = {plot_settings.colors.green, [0.8 0.5 0.1], plot_settings.colors.red};
 
     figure_name = 'Simulated vs Estimated by SNR Level';
 
