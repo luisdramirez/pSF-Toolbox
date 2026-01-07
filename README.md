@@ -19,11 +19,11 @@ This directory contains scripts for executing the experiment via Psychtoolbox.
 
 We provide an example scan session script for data acquisition (see `/measure-pSFT/run_session.m`) that can be modified with respect to the experimental setup. For example, the input device name, toggles (e.g., save run info), subject ID, directories, and screen parameters should be verified by the user.  
 
-Critical functions include `prepareScan()` and `presentStimuli()`. 
+Critical functions include `prepareScan` and `presentStimuli`. 
 
 Users will find key stimulus and timing parameters inside `prepareScan`. For example, to adjust the size of the stimulus, the user must change `p.aperture_radius_deg` (or `p.aperture_radius_px`); to match the fMRI scan length, `t.TR` must match the duration of the repetition time. 
 
-`presentStimuli()` will output a structure, `run_info` that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`). While already in `run_info`, the matrix containing the SF input time series for every block is stored as a separate `.mat` file for convenience, as the time series across multiple blocks and runs should be concatenated as an input vector (i.e., time x 1) into the pSFT optimization pipeline (see `generateSFTimeSeries()`).
+`presentStimuli` will output a structure, `run_info` that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`). While already in `run_info`, the matrix containing the SF input time series for every block is stored as a separate `.mat` file for convenience, as the time series across multiple blocks and runs should be concatenated as an input vector (i.e., time x 1) into the pSFT optimization pipeline (see `generateSFTimeSeries`).
 
 
 **Directory contents**
@@ -32,14 +32,14 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 -   `/stimuli`: Stimulus textures will be stored here by default.
     - `verify_stimuli.m`: Analyzes spectral energy of stimuli. Can generate and save experimental stimuli as well. 
 -   `/functions`: Contains supporting functions for stimulus generation, display, and experimental control.
-    -   `checkPTB()`: Verifies Psychtoolbox installation.
-    -   `prepareScan()`: Initializes parameters, stimuli, timing, and Psychtoolbox window.
-    -   `createTextures()`: Creates bandpass-filtered noise textures for stimuli.
-    -   `createApertures()`: Creates stimulus apertures.
-    -   `genFrames()`: Generates the sequence of events and timing for each experiment frame.
-    -   `presentStimuli()`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
-    -   `generateSFTimeSeries()`: Generates a vectorized SF input time series.
-    -   `stimulusParams()`: Defines stimulus parameters (aperture radius, contrast, noise filter count, noise sample count).
+    -   `checkPTB`: Verifies Psychtoolbox installation.
+    -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window.
+    -   `createTextures`: Creates bandpass-filtered noise textures for stimuli.
+    -   `createApertures`: Creates stimulus apertures.
+    -   `genFrames`: Generates the sequence of events and timing for each experiment frame.
+    -   `presentStimuli`: Draws stimuli frame by frame. Compiles run information (e.g., parameters, behavioral data) into struct `run_info`.
+    -   `generateSFTimeSeries`: Generates a vectorized SF input time series.
+    -   `stimulusParams`: Defines stimulus parameters (aperture radius, contrast, noise filter count, noise sample count).
 
 
 ## estimate-pSFT
