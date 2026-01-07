@@ -53,13 +53,13 @@ for snr_idx = 1:num_SNR_levels
             gt_params = simulated_data(subj, roi).params;
             est_params = all_pSFT{snr_idx}(subj, roi).param_est;
 
-            % Extract mu and sigma (the key pSFT parameters)
+            % Extract mu and sigma
             gt_mu = gt_params(1, :);
             gt_sigma = gt_params(2, :);
             est_mu = est_params(1, :);
             est_sigma = est_params(2, :);
 
-            % Compute bandwidth in octaves for ground truth and estimated pSFT curves
+            % Compute bandwidth in octaves
             num_voxels = size(simulated_data(subj, roi).SFT, 2);
             gt_bandwidth_oct = nan(1, num_voxels);
             est_bandwidth_oct = nan(1, num_voxels);
@@ -69,7 +69,7 @@ for snr_idx = 1:num_SNR_levels
                 [est_bandwidth_oct(vox), ~] = cpd2oct(all_pSFT{snr_idx}(subj, roi).est_SFT(:, vox), p.sfs);
             end
 
-            % Store bandwidth in simulated_data for later use in plotting (only on first SNR level)
+            % Store bandwidth in simulated_data for later use in plotting
             if snr_idx == 1
                 simulated_data(subj, roi).bandwidth_oct = gt_bandwidth_oct;
             end
@@ -83,7 +83,7 @@ for snr_idx = 1:num_SNR_levels
             all_gt_bandwidth_oct = [all_gt_bandwidth_oct, gt_bandwidth_oct];
             all_est_bandwidth_oct = [all_est_bandwidth_oct, est_bandwidth_oct];
 
-            % Compute per-subject/ROI metrics
+            % Compute metrics
             errors_mu = gt_mu - est_mu;
             errors_bandwidth_oct = gt_bandwidth_oct - est_bandwidth_oct;
 
@@ -95,14 +95,14 @@ for snr_idx = 1:num_SNR_levels
 
             mean_r2 = mean(all_pSFT{snr_idx}(subj, roi).r2);
 
-            % Store per-subject/ROI metrics
+            % Store metrics
             validation_metrics{snr_idx}(subj, roi).rmse_mu = rmse_mu;
             validation_metrics{snr_idx}(subj, roi).rmse_bandwidth_oct = rmse_bandwidth_oct;
             validation_metrics{snr_idx}(subj, roi).corr_mu = corr_mu;
             validation_metrics{snr_idx}(subj, roi).corr_bandwidth_oct = corr_bandwidth_oct;
             validation_metrics{snr_idx}(subj, roi).mean_r2 = mean_r2;
 
-            % Display per-subject/ROI metrics
+            % Display metrics
             if disp_on
                 disp(['S' num2str(subj) ', ' roi_names{roi} ':']);
                 disp(['  RMSE (mu):           ' num2str(round(rmse_mu, 4))]);
@@ -116,7 +116,7 @@ for snr_idx = 1:num_SNR_levels
         end
     end
 
-    % Store pooled data for this SNR level
+    % Store pooled data
     pooled_data{snr_idx}.all_gt_mu = all_gt_mu;
     pooled_data{snr_idx}.all_est_mu = all_est_mu;
     pooled_data{snr_idx}.all_gt_sigma = all_gt_sigma;
@@ -125,7 +125,7 @@ for snr_idx = 1:num_SNR_levels
     pooled_data{snr_idx}.all_est_bandwidth_oct = all_est_bandwidth_oct;
     pooled_data{snr_idx}.SNR_dB = SNR_levels_dB(snr_idx);
 
-    % Compute pooled RMSE and correlation for this SNR level
+    % Compute pooled RMSE and correlation
     pooled_data{snr_idx}.rmse_mu = sqrt(mean((all_gt_mu - all_est_mu).^2));
     pooled_data{snr_idx}.rmse_bandwidth_oct = sqrt(mean((all_gt_bandwidth_oct - all_est_bandwidth_oct).^2));
     pooled_data{snr_idx}.corr_mu = corr(all_gt_mu', all_est_mu');
@@ -171,7 +171,7 @@ for snr_idx = 1:num_SNR_levels
         disp(['  Corr (bandwidth oct): ' num2str(round(pooled_data{snr_idx}.corr_bandwidth_oct, 4)) ' ±' num2str(round(pooled_data{snr_idx}.se_corr_bandwidth_oct, 4))]);
     end
 
-end  % End SNR level loop
+end
 
 end
 
