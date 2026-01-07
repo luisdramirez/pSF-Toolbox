@@ -1,4 +1,4 @@
-% createTextures - Generate stimuli for acquiring pSF
+% createTextures - Generate stimuli for acquiring pSFT
 %   Generates a set of bandpass filtered noise textures for a given image size and ppd.
 %
 % Syntax
@@ -72,7 +72,7 @@ for n_filter = 1:noise_filter_count
         % Generate white noise
         noise_texture = 2 * rand(radius_px) - 1;
 
-        % figure, imagesc(noise_texture), colormap("gray"), axis square, axis off, box off, title("2a: noise sample") 
+        % figure, imagesc(noise_texture), colormap("gray"), axis square, axis off, box off, title("2a: noise sample")
 
         % Convert to frequency domain
         fft_texture = fftshift(fft2(noise_texture));
@@ -99,7 +99,7 @@ for n_filter = 1:noise_filter_count
         % Apply contrast scaling and shift to mean gray level
         filtered_texture = 127 * (1 + filtered_texture * 2 * contrast);
 
-        % figure, imagesc(filtered_texture), colormap("gray"), axis square, axis off, box off, title("4: bandpass-filtered noise") 
+        % figure, imagesc(filtered_texture), colormap("gray"), axis square, axis off, box off, title("4: bandpass-filtered noise")
 
         % Store the final texture
         textures(:, :, n_filter, n_noise_sample) = filtered_texture;
