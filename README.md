@@ -89,11 +89,17 @@ Parameters:
 -   `/validate-pSFT`: Contains validation scripts for testing the pSFT estimation pipeline.
     -   `simulate_pSFT.m`: Simulates pSFT curves and demonstrates how changes in peak SF (μ) and bandwidth (σ) affect the tuning function.
     -   `validate_pSFT.m`: Validates the pSFT estimation pipeline by simulating stimulus and BOLD time series from pre-defined pSFT parameters, then estimating parameters and comparing estimates to ground truth. Results are saved under `/validate-pSFT/estimates/` and `/validate-pSFT/figures/`.
+    -   `/functions`: Contains modular functions for validation:
+        -   `generateSimulatedBOLD.m`: Generates clean BOLD responses from ground truth pSFT parameters and adds Gaussian noise at multiple SNR levels.
+        -   `computeValidationMetrics.m`: Computes validation metrics (RMSE, correlation, R²) for each SNR level, both per-subject/ROI and pooled across all voxels, with bootstrap confidence intervals.
 
 ### validate-pSFT
 
-This subdirectory contains scripts for validating and simulating pSFT. `simulate_pSFT.m` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. `validate_pSFT.m` performs a complete validation of the estimation pipeline by generating synthetic data with known pSFT parameters, running the estimation procedure, and comparing the estimated parameters to the ground truth values.
+This subdirectory contains scripts for validating and simulating pSFT. 
 
+This sub-module demonstrates the effectiveness of the model fitting pipeline. Inspired by the validation framework of Lerma-Usabiaga et al. (2020), `validate_pSFT.m` generates synthetic BOLD data from known parameters (log-Gaussian model convolved with a canonical HRF) across three SNR levels: 5.29, -0.51, and -4.29 dB. The script runs the estimation pipeline on this data and benchmarks performance by comparing recovered parameters to ground truth. Metrics include RMSE and Pearson correlations with bootstrap confidence intervals. The module automatically saves timestamped results and visualization reports.
+
+`simulate_pSFT.m` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters. 
 
 ## License
 
