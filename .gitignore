@@ -2,7 +2,8 @@
 estimate-pSFT/data/sample_data_*
 /estimate-pSFT-amplitude
 /estimate-pSFT/estimates
-/measure-pSFT/stimuli
+/measure-pSFT/stimuli/*.mat
+/measure-pSFT/stimuli/figures
 /measure-pSFT/data
 /estimate-pSFT/figures
 /estimate-pSFT/validate-pSFT/estimates
