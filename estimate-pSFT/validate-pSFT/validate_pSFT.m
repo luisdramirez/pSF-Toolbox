@@ -51,7 +51,7 @@ checkRequiredToolboxes(toggles);
 
 %% Parallelization setup for parfor loop
 
-p.num_cores = 8;
+p.num_cores = 4;
 p.num_chunks = p.num_cores - 1;
 
 if toggles.parallelization
