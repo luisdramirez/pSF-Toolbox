@@ -12,7 +12,6 @@
 %   ppd – pixels per degree
 %   save_textures – boolean to save the textures
 %   texture_filepath – path to save the textures
-%   verify_energy – boolean to verify the energy of the textures
 %
 % Output Arguments
 %   textures – [height, width, filter_count, noise_sample] of bandpass filtered noise textures
