@@ -15,7 +15,7 @@ function p = stimulusParams(p, w)
 
 p.aperture_radius_deg = 9; % defines the apparent stimulus size
 p.aperture_radius_px = round(p.aperture_radius_deg * w.ppd);
-p.stimulus_radius_px = round(p.aperture_radius_px * 1.25); % default = 1.1
+p.stimulus_diameter_px = round(p.aperture_radius_px * 2 * 1.25); % stimulus texture size (1.25x larger than aperture diameter)
 
 p.stimulus_contrast = 0.9; % default = 0.9
 p.noise_filter_count = 40; % default = 40

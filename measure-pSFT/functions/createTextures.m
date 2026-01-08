@@ -2,10 +2,10 @@
 %   Generates a set of bandpass filtered noise textures for a given image size and ppd.
 %
 % Syntax
-%   [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, save_textures, texture_filepath)
+%   [textures, filters] = createTextures(diameter_px, contrast, noise_filter_count, noise_sample_count, ppd, save_textures, texture_filepath)
 %
 % Input Arguments
-%   radius_px – radius of the stimulus in pixels
+%   diameter_px – diameter of the stimulus texture in pixels (defines texture dimensions)
 %   contrast – contrast of the noise
 %   noise_filter_count – number of noise filters
 %   noise_sample_count – number of noise samples
@@ -18,7 +18,7 @@
 %   textures – [height, width, filter_count, noise_sample] of bandpass filtered noise textures
 %   filters – structure containing filter parameters (count, min, max, width, gauss_smoothening_sd, centers, lower_bound, upper_bound, f_Nyquist, masks)
 
-function [textures, filters] = createTextures(radius_px, contrast, noise_filter_count, noise_sample_count, ppd, save_textures, texture_filepath)
+function [textures, filters] = createTextures(diameter_px, contrast, noise_filter_count, noise_sample_count, ppd, save_textures, texture_filepath)
 
 %% Bandpass filter parameters
 
@@ -46,14 +46,14 @@ f_high = upper_bound / f_Nyquist;
 %% Create bandpass filtered noise textures
 
 % Initialize texture and mask arrays
-textures = nan(radius_px, radius_px, noise_filter_count, noise_sample_count);
-masks = nan(radius_px, radius_px, noise_filter_count);
+textures = nan(diameter_px, diameter_px, noise_filter_count, noise_sample_count);
+masks = nan(diameter_px, diameter_px, noise_filter_count);
 
 % Loop through each filter (spatial frequency band)
 for n_filter = 1:noise_filter_count
 
     % Create 2D bandpass filter mask
-    bandpass_filter = Bandpass2(radius_px, f_low(n_filter), f_high(n_filter));
+    bandpass_filter = Bandpass2(diameter_px, f_low(n_filter), f_high(n_filter));
 
     % Smooth the filter to avoid ringing artifacts
     bandpass_filter = imgaussfilt(bandpass_filter, gauss_smoothening_sd);
@@ -70,7 +70,7 @@ for n_filter = 1:noise_filter_count
     for n_noise_sample = 1:noise_sample_count
 
         % Generate white noise
-        noise_texture = 2 * rand(radius_px) - 1;
+        noise_texture = 2 * rand(diameter_px) - 1;
 
         % figure, imagesc(noise_texture), colormap("gray"), axis square, axis off, box off, title("2a: noise sample")
 
