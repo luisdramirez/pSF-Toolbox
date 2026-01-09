@@ -1,10 +1,7 @@
 % validate_pSFT
 %
-% This script validates the pSFT estimation pipeline by simulating stimulus and BOLD time series
-% from pre-defined pSFT parameters.
-%
+% This script validates the pSFT estimation pipeline by simulating stimulus and BOLD time series from pre-defined pSFT parameters.
 % It then estimates the pSFT parameters and compares the estimates to the ground truth.
-%
 % Results are saved under `validate-pSFT/estimates/validation_pSFT_n<num_subjs>_yyyy-mm-dd_hh-mm-ss/` and `validate-pSFT/figures/validation_pSFT_n<num_subjs>_yyyy-mm-dd_hh-mm-ss/`.
 
 %% Prepare workspace
@@ -14,6 +11,8 @@ close all;
 clc;
 
 curr_time = string(datetime('now', 'Format', 'yyyy-MM-dd_HH-mm-ss'));
+
+%% Set directories
 
 project_dir = pwd;
 save_dir = 'estimates';
@@ -81,8 +80,6 @@ p.pSFT_bounds(2,:) = [0.009, 0.1, -25, -10]; % lower bounds
 p.fmincon_options = optimset('MaxFunEvals', 100000, 'MaxIter', 10000, 'display', 'off');
 
 %% Simulation parameters
-% For reviewer demonstration: use multiple subjects, ROIs, and voxels
-% to demonstrate validation across different conditions
 
 p.num_subjs = 1;
 p.num_ROIs = 1;
@@ -115,9 +112,8 @@ gt_beta_range = [1 5];       % BOLD amplitude range
 gt_beta0_range = [-0.5 0.5]; % BOLD baseline range
 
 % BOLD noise parameters (SNR in dB)
-% Reference: Lerma-Usabiaga et al. 2020 PLOS Computational Biology, Figure 4
 % SNR_dB = 10 * log10(signal_variance / noise_variance)
-% Default: Low noise: SNR = 5.29 dB; Mid noise: SNR = -0.51 dB; High noise: SNR = -4.29 dB
+% Default: Low noise: SNR = 5.29 dB; Mid noise: SNR = -0.51 dB; High noise: SNR = -4.29 dB (Lerma-Usabiaga et al. 2020 PLOS Computational Biology, Figure 4)
 SNR_levels_dB = [5.29, -0.51, -4.29];  % Low, Mid, High noise
 num_SNR_levels = length(SNR_levels_dB);
 SNR_level_names = cell(1, num_SNR_levels);
@@ -317,11 +313,11 @@ end
 
 plot_settings = plotSettings();
 
-% Generate colors for SNR levels (green → yellow → orange → red)
+% Generate colors for SNR levels
 key_colors = [
     plot_settings.colors.green;      % Green
-    [0.9, 0.8, 0];                   % Yellow (darker)
-    [0.8, 0.5, 0.1];                 % Orange
+    plot_settings.colors.yellow;      % Yellow
+    plot_settings.colors.orange;      % Orange
     plot_settings.colors.red         % Red
     ];
 if num_SNR_levels == 1
@@ -350,8 +346,8 @@ if ~exist(figure_save_dir, 'dir'), mkdir(figure_save_dir); end
 if toggles.make_voxel_plots
 
     num_voxels_to_plot = 1;
-    snr_idx_for_voxel_plots = 1;  % Use low noise level for voxel plots
-    num_runs_to_plot = 1;         % Number of runs to display in time series plots
+    snr_idx_for_voxel_plots = 1;
+    num_runs_to_plot = 1;
 
     fg = figure('Visible', 'on', 'Color', 'w');
     set(0, 'CurrentFigure', fg);

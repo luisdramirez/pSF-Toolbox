@@ -1,6 +1,6 @@
 % computeValidationMetrics - Compute validation metrics for pSFT estimation
 %
-% Computes RMSE, correlation, and R² metrics for each SNR level, both
+% Computes RMSE, correlation, and R^2 metrics for each SNR level, both
 % per-subject/ROI and pooled across all voxels.
 %
 % Inputs:

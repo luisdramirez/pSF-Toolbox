@@ -170,8 +170,6 @@ if make_voxel_plots
 
     plot_settings = plotSettings();
 
-    num_voxels_to_plot = 1;
-
     fg = figure('Visible','on','Color','w');
     set(0,'CurrentFigure',fg);
 
@@ -182,6 +180,8 @@ if make_voxel_plots
                 figure_path = fullfile(figure_save_dir, ['S' num2str(subj)], ['V' num2str(roi)]);
                 if ~exist(figure_path, 'dir'), mkdir(figure_path); end
             end
+
+            num_voxels_to_plot = 1; % or p.num_voxels(subj,roi) for all voxels
 
             for vox = 1:num_voxels_to_plot
 

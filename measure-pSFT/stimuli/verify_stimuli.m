@@ -1,3 +1,8 @@
+% verify_stimuli
+%
+% This script verifies the textures by computing the power spectrum.
+% It plots power spectra and textures, and saves the figures.
+% It can also generate and save the textures if they do not exist.
 
 %% Prepare workspace
 
@@ -38,7 +43,7 @@ if ~exist(energy_figures_dir, 'dir')
 end
 
 %% Screen parameters
-% Match the parameters used to generate the textures.
+% Note: If the parameters here match your experimental setup, then this script can generate the textures for your setup.
 
 w.view_distance = 57; % cm
 w.screen_width = 30; % cm
@@ -47,18 +52,19 @@ w.screen_height_px = 491;
 w.centerX = round(w.screen_width_px/2);
 w.centerY = round(w.screen_height_px/2);
 
-w.visual_angle = 2 * atan2d(w.screen_width/2,  w.view_distance); % deg of visual angle
-w.ppd = round(w.screen_width_px/w.visual_angle); % px/deg
-w.px_size = w.screen_width/w.screen_width_px; % cm
+w.visual_angle = 2 * atan2d(w.screen_width/2,  w.view_distance); % degrees of visual angle (deg)
+w.ppd = round(w.screen_width_px/w.visual_angle); % pixels per degree (px/deg)
+w.px_size = w.screen_width/w.screen_width_px; % cm per pixel (cm/px)
 
 %% Stimuli parameters
 
-p = struct(); % Initialize p if it doesn't exist
+p = struct();
 p = stimulusParams(p, w);
 
-%% Load textures if they exist
+%% Load textures if they exist, otherwise generate them
 
 % Construct filename to verify (matches prepareScan.m logic)
+% Example output filename: bandpass_filtered_noise_42_123_090_40_10.mat
 texture_filename = sprintf('bandpass_filtered_noise_%s_%s_%s_%s_%s.mat', ...
     strrep(sprintf('%0.0f', w.ppd), '.', ''), ...
     strrep(sprintf('%0.0f', p.stimulus_diameter_px), '.', ''), ...
@@ -109,31 +115,31 @@ for sf_idx = 1:size(textures,3)
 
     %% Compute power spectrum
 
-    % Subtract mean to remove DC component (textures are shifted to gray level ~127)
+    % Subtract mean to remove DC component
     texture = texture - mean(texture(:));
 
-    fft_texture = fftshift(fft2(texture));
-    power_spectrum = abs(fft_texture).^2;
+    fft_texture = fftshift(fft2(texture)); % convert to frequency domain and shift zero frequency to center
+    power_spectrum = abs(fft_texture).^2; % compute power spectrum by squaring the magnitude
 
     %% Create coordinate space
 
     [rows, cols] = size(texture);
 
-    % Frequency axes should range from -0.5 to 0.5 because 1 cycle = 2 pixels
-    % i.e., one pixel is half a cycle.
+    % Frequency axes range from -0.5 to just below 0.5 (Nyquist).
+    % The +0.5 and -0.5 frequencies are aliases, so only -0.5 is included.
 
-    u = ((-cols/2:cols/2-1)/cols);
-    v = ((-rows/2:rows/2-1)/rows);
+    u = (-cols/2:cols/2-1) / cols;
+    v = (-rows/2:rows/2-1) / rows;
     [U, V] = meshgrid(u, v);
 
     %% Compute radial frequency
 
     rho_cpp = sqrt(U.^2 + V.^2); % cycles per pixel
-    rho_cpd = rho_cpp * w.ppd; % cycles per degree
+    rho_cpd = rho_cpp * w.ppd; % (cycles/pixel) * (pixels/degree) = (cycles/degree)
 
-    %% Calculate target center frequency
+    %% Get target center frequency
 
-    target_center = (filters.lower_bound(sf_idx) + filters.upper_bound(sf_idx)) / 2;
+    target_center = filters.centers(sf_idx);
 
     %% Radially average power spectrum (with overlapping bins for smoothness)
 
@@ -148,8 +154,7 @@ for sf_idx = 1:size(textures,3)
 
     for i = 1:length(bin_centers)
         % Find pixels within bin_width/2 of the current center frequency
-        band_mask = (rho_cpd >= bin_centers(i) - bin_width/2) & ...
-            (rho_cpd < bin_centers(i) + bin_width/2);
+        band_mask = (rho_cpd >= bin_centers(i) - bin_width/2) & (rho_cpd < bin_centers(i) + bin_width/2);
         if any(band_mask(:))
             energy_profile(i) = mean(power_spectrum(band_mask));
         end
@@ -158,11 +163,7 @@ for sf_idx = 1:size(textures,3)
     % Normalize energy profile to [0, 1]
     energy_profile = energy_profile / max(energy_profile);
 
-    % Smooth the profile to reduce discretization artifacts
-    smooth_window = 50; % number of samples for Gaussian smoothing
-    energy_profile = smoothdata(energy_profile, 'gaussian', smooth_window);
-
-    %% Find peak frequency and compute offset from target
+    %% Find peak frequency from energy profile and compute offset from target
 
     [~, peak_idx] = max(energy_profile);
     peak_freq = bin_centers(peak_idx);
@@ -179,8 +180,7 @@ for sf_idx = 1:size(textures,3)
         xline(peak_freq, 'r-', 'LineWidth', 1.5); % Actual peak
 
         % Format figure
-        title(sprintf('Target: %.2f cpd | Peak: %.2f cpd | Offset: %+.2f cpd', ...
-            target_center, peak_freq, peak_offset));
+        title(sprintf('Target: %.2f cpd | Peak: %.2f cpd | Offset: %+.2f cpd', target_center, peak_freq, peak_offset));
         xlabel('Spatial frequency (cpd)');
         ylabel('Normalized power');
         xticks([0.1 0.5 1 5 10 15]);
