@@ -70,7 +70,7 @@ Parameters:
 - Initial pSFT parameters (`p.init_params`)
 - pSFT parameter bounds (`p.pSFT_bounds`)
 
-![Figure 1](figures/pSFT pipeline.png)
+![Figure 1](figures/pSFT_pipeline.png)
 
 **Directory contents**
 -   `example_pipeline.m`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition), visualizing results, and saving results. Results are saved under `/estimates/` with the file format `all_pSFT_n_yyyy-MM-dd_HH-mm-ss.mat` that contains the subject x ROI struct array `all_pSFT`.
