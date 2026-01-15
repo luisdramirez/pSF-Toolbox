@@ -74,7 +74,7 @@ texture_filename = sprintf('bandpass_filtered_noise_%s_%s_%s_%s_%s.mat', ...
 
 texture_filepath = fullfile(stimuli_dir, texture_filename);
 
-fprintf('Target texture file: %s\n', texture_filename);
+fprintf('Target texture file to load: %s\n', texture_filename);
 
 if ~exist(texture_filepath, 'file')
     response = input([texture_filepath ' not found. Would you like to create it? (y/n) '], 's');
@@ -90,13 +90,20 @@ end
 
 %% Run texture energy verification
 
+fprintf('Starting texture verification...\n');
+verification_start = tic;
+
 % Prepare figure handle
 if toggles.save_texture_figures || toggles.save_energy_figures
     fg = figure('Visible','on','Color',[1 1 1]);
     set(0,'CurrentFigure',fg);
 end
 
-for sf_idx = 1:size(textures,3)
+n_textures = size(textures,3);
+for sf_idx = 1:n_textures
+
+    fprintf('Processing texture %d of %d... \n', sf_idx, n_textures);
+    loop_start = tic;
 
     %% Pull texture
 
@@ -109,21 +116,43 @@ for sf_idx = 1:size(textures,3)
         figure_name = ['Texture ' num2str(sf_idx)];
         figure_path = fullfile(texture_figures_dir, [figure_name '.pdf']);
         saveas(gcf, figure_path);
-        disp(['Saved ' figure_name ' in ' figure_path]);
+
+        idx = strfind(figure_path, '/measure-pSFT/');
+        if ~isempty(idx)
+            disp_path = figure_path(idx(1):end);
+        else
+            disp_path = figure_path;
+        end
+        disp(['Saved ' figure_name ' in ' disp_path]);
         clf
     end
 
     %% Compute power spectrum
+    % FFT calculates energy at fixed intervals of ppd/stimulus_diameter_px.
+    % If stimulus_diameter_px doesn't contain an integer number of cycles, the target frequency will fall "between" two bins.
+    % The nearest bin is chosen, resulting in offsets.
+    % To avoid this, the frequency domain is padded for interpolation.
 
     % Subtract mean to remove DC component
     texture = texture - mean(texture(:));
 
-    fft_texture = fftshift(fft2(texture)); % convert to frequency domain and shift zero frequency to center
+    % Calculate the native frequency resolution (cycles per degree per bin)
+    native_res = w.ppd / size(texture, 1);
+
+    % If target frequency is not a multiple of resolution, or resolution is too coarse
+    if mod(filters.centers(sf_idx), native_res) > 1e-5 || size(texture, 1) < 512
+        % Pad to a high-power of 2 to interpolate the spectrum for peak precision
+        padding = 2^nextpow2(size(texture, 1) * 2);
+    else
+        padding = size(texture, 1); % Stay in native resolution
+    end
+
+    fft_texture = fftshift(fft2(texture, padding, padding)); % convert to frequency domain and shift zero frequency to center
     power_spectrum = abs(fft_texture).^2; % compute power spectrum by squaring the magnitude
 
     %% Create coordinate space
 
-    [rows, cols] = size(texture);
+    [rows, cols] = size(fft_texture);
 
     % Frequency axes range from -0.5 to just below 0.5 (Nyquist).
     % The +0.5 and -0.5 frequencies are aliases, so only -0.5 is included.
@@ -141,33 +170,51 @@ for sf_idx = 1:size(textures,3)
 
     target_center = filters.centers(sf_idx);
 
-    %% Radially average power spectrum (with overlapping bins for smoothness)
+    %% Radially average power spectrum
 
     max_freq = max(rho_cpd(:));
 
     % Use overlapping bins: fine step size for smooth curve, wider bin for averaging
     step_sz = 0.001;    % Fine step between bin centers (controls curve resolution)
-    bin_width = 0.2;   % Width of each bin (controls smoothing amount)
+    bin_width = 0.05;   % Width of each bin (controls smoothing amount)
 
-    bin_centers = step_sz:step_sz:max_freq;
-    energy_profile = zeros(size(bin_centers));
+    % Discretize rho_cpd into fine, non-overlapping bins (size = step_sz)
+    fine_edges = 0:step_sz:max_freq+step_sz;
+    [~, ~, bin_idx] = histcounts(rho_cpd(:), fine_edges);
 
-    for i = 1:length(bin_centers)
-        % Find pixels within bin_width/2 of the current center frequency
-        band_mask = (rho_cpd >= bin_centers(i) - bin_width/2) & (rho_cpd < bin_centers(i) + bin_width/2);
-        if any(band_mask(:))
-            energy_profile(i) = mean(power_spectrum(band_mask));
-        end
-    end
+    % Accumulate power and counts in bins
+    % Filter out invalid bins (0)
+    valid_mask = bin_idx > 0;
+    bin_idx = bin_idx(valid_mask);
+    power_vals = power_spectrum(valid_mask);
 
-    % Normalize energy profile to [0, 1]
+    num_fine_bins = length(fine_edges) - 1;
+    fine_power = accumarray(bin_idx, power_vals, [num_fine_bins 1]);
+    fine_counts = accumarray(bin_idx, 1, [num_fine_bins 1]);
+
+    % Apply sliding window smoothing (boxcar average)
+    window_sz = round(bin_width / step_sz);
+
+    smoothed_power = movsum(fine_power, window_sz);
+    smoothed_counts = movsum(fine_counts, window_sz);
+
+    % Compute mean energy profile
+    energy_profile = smoothed_power ./ smoothed_counts;
+
+    % Generate bin centers
+    bin_centers = (fine_edges(1:end-1) + fine_edges(2:end)) / 2;
+
+    % Normalize energy profile
     energy_profile = energy_profile / max(energy_profile);
 
     %% Find peak frequency from energy profile and compute offset from target
 
     [~, peak_idx] = max(energy_profile);
     peak_freq = bin_centers(peak_idx);
-    peak_offset = peak_freq - target_center; % positive = peak is higher than target
+
+    % Compute offsets
+    percent_offset = 100 * (peak_freq - target_center) / target_center;
+    octave_offset = log2(peak_freq / target_center);
 
     %% Plot power spectrum
 
@@ -180,7 +227,7 @@ for sf_idx = 1:size(textures,3)
         xline(peak_freq, 'r-', 'LineWidth', 1.5); % Actual peak
 
         % Format figure
-        title(sprintf('Target: %.2f cpd | Peak: %.2f cpd | Offset: %+.2f cpd', target_center, peak_freq, peak_offset));
+        title(sprintf('Target: %.3f cpd | Peak: %.3f cpd | Offset: %+.3f%% (%+.3f oct)', target_center, peak_freq, percent_offset, octave_offset));
         xlabel('Spatial frequency (cpd)');
         ylabel('Normalized power');
         xticks([0.1 0.5 1 5 10 15]);
@@ -194,12 +241,25 @@ for sf_idx = 1:size(textures,3)
         figure_name = ['Filter ' num2str(sf_idx) ' Power Spectrum'];
         figure_path = fullfile(energy_figures_dir, [figure_name '.pdf']);
         saveas(gcf, figure_path);
-        disp(['Saved ' figure_name ' in ' figure_path]);
+
+        idx = strfind(figure_path, '/measure-pSFT/');
+        if ~isempty(idx)
+            disp_path = figure_path(idx(1):end);
+        else
+            disp_path = figure_path;
+        end
+        disp(['Saved ' figure_name ' in ' disp_path]);
         clf
 
     end
 
+    loop_duration = toc(loop_start);
+    fprintf('Done (%.2f s).\n', loop_duration);
+
 end
+
+total_duration = toc(verification_start);
+fprintf('Texture verification complete (Total time: %.2f s).\n', total_duration);
 
 % Close figure handle
 if toggles.save_texture_figures || toggles.save_energy_figures
