@@ -219,6 +219,10 @@ for sf_idx = 1:n_textures
     percent_offset = 100 * (peak_freq - target_center) / target_center;
     octave_offset = log2(peak_freq / target_center);
 
+    if abs(percent_offset) > 5
+        warning('Peak SF fidelity failure: Texture %d has a peak offset of %.2f%%. Consider adjusting diameter_px.', sf_idx, percent_offset);
+    end
+
     %% Plot power spectrum
 
     if toggles.save_energy_figures
