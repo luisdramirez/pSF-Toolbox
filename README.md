@@ -25,6 +25,9 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 
 `presentStimuli` will output a structure, `run_info` that compiles all the experiment's structures (scan parameters `p`, timing parameters `t`, window paramters `w`, frame sequences `frames`, and behavioral data `behav_data`). While already in `run_info`, the matrix containing the SF input time series for every block is stored as a separate `.mat` file for convenience, as the time series across multiple blocks and runs should be concatenated as an input vector (i.e., time x 1) into the pSFT optimization pipeline (see `generateSFTimeSeries`).
 
+![Figure 1](figures/pSFT_experiment.png)
+
+**Figure 1: pSFT fMRI scan design.** The default scan consists of 6 40-s stimulus blocks surrounded by 10-s blank periods. In each stimulus block, 40 SF bandpass-filtered stimuli are presented in a random order while participants perform a luminance change detection task at fixation. This scan is repeated 9 times by default, for a total of 54 blocks. 
 
 **Directory contents**
 -   `run_session.m`: Example scan session script for data acquisition
@@ -70,9 +73,9 @@ Parameters:
 - Initial pSFT parameters (`p.init_params`)
 - pSFT parameter bounds (`p.pSFT_bounds`)
 
-![Figure 1](figures/pSFT_pipeline.png)
+![Figure 2](figures/pSFT_pipeline.png)
 
-**Figure 1: pSFT model fitting pipeline.** A sequence of SFs is fed into a log-Gaussian function to produce a neural response. The neural response is convolved with a HRF to produce a synthesized BOLD response that is compared to the measured BOLD response. This process is repeated and the pSFT parameters optimized until the sum of squares error (SSE) between the predicted and measured BOLD response is minimized. 
+**Figure 2: pSFT model fitting pipeline.** A sequence of SFs is fed into a log-Gaussian function to produce a neural response. The neural response is convolved with a HRF to produce a synthesized BOLD response that is compared to the measured BOLD response. This process is repeated and the pSFT parameters optimized until the sum of squares error (SSE) between the predicted and measured BOLD response is minimized. 
 
 **Directory contents**
 -   `example_pipeline.m`: Demonstrates a complete workflow for estimating pSFT parameters using sample data. Includes setting up estimation settings (parallelization, grid search, parameter bounds, HRF definition), visualizing results, and saving results. Results are saved under `/estimates/` with the file format `all_pSFT_n_yyyy-MM-dd_HH-mm-ss.mat` that contains the subject x ROI struct array `all_pSFT`.
