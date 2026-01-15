@@ -8,3 +8,4 @@ estimate-pSFT/data/sample_data_*
 /estimate-pSFT/figures
 /estimate-pSFT/validate-pSFT/estimates
 /estimate-pSFT/validate-pSFT/figures
+*.pdf
