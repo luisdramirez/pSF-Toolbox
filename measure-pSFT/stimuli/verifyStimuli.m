@@ -1,14 +1,17 @@
-% verify_stimuli
+% verifyStimuli
+%   Verifies the textures by computing the power spectrum.
+%   Plots power spectra and textures, and saves the figures.
+%   Can also generate and save the textures if they do not exist.
 %
-% This script verifies the textures by computing the power spectrum.
-% It plots power spectra and textures, and saves the figures.
-% It can also generate and save the textures if they do not exist.
+% Syntax
+%   verifyStimuli()
+%
+% Input Arguments
+%   None
+% Output Arguments
+%   None
 
-%% Prepare workspace
-
-clear all;
-close all;
-clc;
+function verifyStimuli()
 
 %% Toggles
 
@@ -18,7 +21,7 @@ toggles.save_energy_figures = true;
 
 %% Set directories
 
-script_dir = pwd;
+script_dir = fileparts(mfilename('fullpath')); % Updated to be robust
 stimuli_dir = script_dir;
 parent_dir = fileparts(script_dir);
 functions_dir = fullfile(parent_dir, 'functions');
@@ -264,6 +267,8 @@ fprintf('Texture verification complete (Total time: %.2f s).\n', total_duration)
 % Close figure handle
 if toggles.save_texture_figures || toggles.save_energy_figures
     close(fg)
+end
+
 end
 
 %%

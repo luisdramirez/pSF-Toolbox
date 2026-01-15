@@ -33,7 +33,7 @@ Users will find key stimulus and timing parameters inside `prepareScan`. For exa
 -   `run_session.m`: Example scan session script for data acquisition
 -   `/data`: Experimental run info will be stored here by default.
 -   `/stimuli`: Stimulus textures will be stored here by default.
-    - `verify_stimuli.m`: Analyzes spectral energy of stimuli. Can generate and save experimental stimuli as well. 
+    - `verifyStimuli`: Analyzes spectral energy of stimuli. Can generate and save experimental stimuli as well. 
 -   `/functions`: Contains supporting functions for stimulus generation, display, and experimental control.
     -   `checkPTB`: Verifies Psychtoolbox installation.
     -   `prepareScan`: Initializes parameters, stimuli, timing, and Psychtoolbox window.
