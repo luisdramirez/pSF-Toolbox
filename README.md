@@ -115,7 +115,7 @@ Parameters:
 
 This subdirectory contains scripts for validating and simulating pSFT.
 
-This sub-module demonstrates the effectiveness of the model fitting pipeline. Inspired by the validation framework of Lerma-Usabiaga et al. (2020), `validate_pSFT.m` generates synthetic BOLD data from known parameters (log-Gaussian model convolved with a canonical HRF) across SNR levels (e.g., 5.29, -0.51, and -4.29 dB). The script runs the estimation pipeline on this data and benchmarks performance by comparing recovered parameters to ground truth. Metrics include RMSE and Pearson correlations with bootstrap confidence intervals. The module automatically saves timestamped results and visualization reports.
+This sub-module demonstrates the effectiveness of the model fitting pipeline. Inspired by the validation framework of [Lerma-Usabiaga et al. (2020)](https://doi.org/10.1371/journal.pcbi.1007924), `validate_pSFT.m` generates synthetic BOLD data from known parameters (log-Gaussian model convolved with a canonical HRF) across SNR levels (e.g., 5.29, -0.51, and -4.29 dB). The script runs the estimation pipeline on this data and benchmarks performance by comparing recovered parameters to ground truth. Metrics include RMSE and Pearson correlations with bootstrap confidence intervals. The module automatically saves timestamped results and visualization reports.
 
 `simulate_pSFT.m` demonstrates how the log Gaussian pSFT model responds to changes in peak spatial frequency and bandwidth parameters.
 
