@@ -54,7 +54,7 @@ if toggles.macOS
 else
     % Request high-precision framebuffer (skipped on macOS due to alpha blending incompatibility)
     PsychImaging('PrepareConfiguration');
-    PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
+    PsychImaging('AddTask', 'General', 'FloatingPoint32Bit');
 end
 
 w.window = PsychImaging('OpenWindow', w.use_screen, w.gray, [0 0 w.screen_width_px w.screen_height_px]);
